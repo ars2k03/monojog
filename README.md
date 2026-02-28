@@ -1,17 +1,101 @@
-# monojog
+<<<<<<< HEAD
+# মনোযোগ (Monojog)
 
-A new Flutter project.
+একটি অফলাইন স্টাডি ট্র্যাকার অ্যাপ যা আপনাকে মনোযোগ দিয়ে পড়াশোনা করতে সাহায্য করে।
 
-## Getting Started
+## বৈশিষ্ট্য
 
-This project is a starting point for a Flutter application.
+### 📚 স্টাডি ট্র্যাকার
+- দৈনিক পড়াশোনার সময় ট্র্যাক করুন
+# মনোযোগ (Monojog)
 
-A few resources to get you started if this is your first Flutter project:
+This repository contains the Monojog Flutter app (monojog.app).
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+একটি অফলাইন স্টাডি ট্র্যাকার অ্যাপ যা আপনাকে মনোযোগ দিয়ে পড়াশোনা করতে সাহায্য করে।
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## বৈশিষ্ট্য
+
+### 📚 স্টাডি ট্র্যাকার
+- দৈনিক পড়াশোনার সময় ট্র্যাক করুন
+- বিষয় অনুযায়ী সেশন রেকর্ড করুন
+- ধারাবাহিকতা (streak) ট্র্যাক করুন
+
+### 🎯 মনোযোগ মোড (Focus Mode)
+- নির্দিষ্ট সময়ের জন্য অন্য অ্যাপ ব্লক করুন
+- পোমোডোরো টাইমার (15, 25, 30, 45, 60, 90, 120 মিনিট)
+- ব্লক করা অ্যাপ খুললে স্বয়ংক্রিয়ভাবে ব্লক স্ক্রিন দেখায়
+
+### 📊 পরিসংখ্যান
+- সাপ্তাহিক এবং মাসিক অগ্রগতি চার্ট
+- মোট পড়াশোনার সময়
+- সেশন সম্পন্নের হিসাব
+
+### ⚙️ সেটিংস
+- দৈনিক লক্ষ্য নির্ধারণ
+- নোটিফিকেশন কাস্টমাইজ
+- সম্পূর্ণ অফলাইন - কোনো লগইন প্রয়োজন নেই
+
+## ইনস্টল করুন
+
+### প্রয়োজনীয়তা
+- Flutter SDK (>=3.0.0)
+- Android Studio / VS Code
+- Android SDK (minSdk 23)
+
+### ধাপসমূহ
+
+1. রিপোজিটরি ক্লোন করুন:
+```bash
+git clone https://github.com/edulancehub/monojog.git
+cd monojog
+```
+
+2. ডিপেন্ডেন্সি ইনস্টল করুন:
+```bash
+flutter pub get
+```
+
+3. ফন্ট ডাউনলোড করুন:
+   - [NotoSansBengali](https://fonts.google.com/noto/specimen/Noto+Sans+Bengali) ডাউনলোড করুন
+   - assets/fonts/ ফোল্ডারে রাখুন
+
+4. অ্যাপ চালান:
+```bash
+flutter run
+```
+
+### APK বিল্ড করুন
+```bash
+flutter build apk --release
+```
+
+## অনুমতিসমূহ
+
+অ্যাপ ব্লকিং ফিচারের জন্য নিম্নলিখিত অনুমতি প্রয়োজন:
+
+1. **Usage Access** - চলমান অ্যাপ শনাক্ত করতে
+2. **Display over other apps** - ব্লক স্ক্রিন দেখাতে
+
+## প্রযুক্তি
+
+- **Framework**: Flutter 3.x
+- **Language**: Dart, Kotlin
+- **State Management**: Provider
+- **Local Database**: SQLite (sqflite)
+- **Charts**: fl_chart
+
+## স্ক্রিনশট
+
+[স্ক্রিনশট এখানে যোগ করুন]
+
+## লাইসেন্স
+
+MIT License
+
+## যোগাযোগ
+
+মনোযোগ দিয়ে পড়ুন, সফল হন! 🎓
+
+---
+Made with ❤️ in Bangladesh 🇧🇩
+
