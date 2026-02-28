@@ -1,0 +1,190 @@
+Monojog Feature Specification & Software Flow
+=============================================
+
+1) Product Overview
+-------------------
+Monojog is a focus productivity platform that combines deep-focus sessions, anti-distraction controls, study communities, task management, sleep tracking, and a gamified growth loop.
+
+Primary goals:
+- Help users complete consistent deep work sessions.
+- Reduce distraction through app blocking and strict modes.
+- Enable cooperative and competitive study via community + room workflows.
+- Provide habit-forming feedback with progress, forest rewards, and historical analytics.
+
+
+2) Core Feature Modules
+-----------------------
+A. Authentication & Session Modes
+- Google Sign-In (Firebase Auth)
+- Email/Password Sign-In
+- Anonymous Guest Sign-In
+- Offline mode support with local persistence
+
+B. Focus Engine
+- Configurable focus duration
+- Short/long break automation (Pomodoro-style)
+- App blocking integration (Android)
+- DND support during focus
+- Strict mode behavior
+- Anti-cheat penalties (idle/app-switch)
+- Session persistence and daily stats updates
+
+C. Community & Study Rooms
+- Create community (owner + code)
+- Join community by code
+- Create multiple rooms inside a community
+- Join room by code
+- Persistent room membership across session completion
+- Room chat (text + system events)
+- Member poke/nudge in active room
+- Shared room timer state indicators
+
+D. Task Management
+- Add/edit/delete tasks with categories (work/study/personal/health/creative)
+- Date + time + priority assignment
+- Estimated time and actual elapsed time tracking per task
+- Per-task start/stop timer with real-time elapsed display
+- Subtask creation and completion tracking
+- Recurring task rules
+- Three view modes: List (14-day date strip), Calendar (month grid), Analytics
+- Calendar view with task indicators per day and month navigation
+- Weekly completion chart and weekly time chart
+- Category-based time breakdown analysis
+- Task detail bottom sheet with timer controls and subtask checklist
+- DB migration for new columns (completed_at, category, estimated_minutes, elapsed_seconds, subtasks)
+
+E. Sleep Tracking
+- Sleep session start/stop tracking with quality scoring
+- Wake-up alarm scheduling (native Android AlarmManager via Kotlin)
+- Bedtime goal setting with live countdown-to-sleep timer
+- AI-powered sleep suggestions engine (pattern-based analysis):
+  - Analyzes average sleep duration, bedtime consistency, quality trends
+  - Generates personalized recommendations (bedtime, wake-up, quality, habit, warning)
+- Sleep analysis tab with:
+  - Weekly hours chart + quality trend chart
+  - Average bedtime/wake-up pattern stats
+  - Sleep streak tracking
+  - Session history with swipe-to-delete
+- Alarm toggle with native notification + vibration
+- Settings persistence via SharedPreferences
+
+F. Garden & Rewards (Forest Theme)
+- Forest-themed reward progression
+- Tree/forest reward catalog
+- Reward purchase and unlock logic
+- Profile level/progression linkage
+
+G. Profile & Settings
+- Profile overview and progress
+- Production-grade settings:
+  - Language switching
+  - Focus mode controls (strict/block-all/DND)
+  - Break duration controls
+  - Local UX preferences
+  - Data reset flow
+
+H. Android Home Widget
+- Home-screen widget showing focus status
+- Time and session metadata display
+- Tap-to-open app behavior
+- Widget state refresh from focus provider
+
+I. Social Media & App Blocking
+- Native Kotlin detection of installed social media apps
+  (Facebook, Instagram, YouTube, TikTok, Snapchat, Twitter/X, Reddit, Pinterest, LinkedIn)
+- One-tap "Block Social Media" mode with configurable duration
+- Dedicated getSocialMediaApps MethodChannel for listing detected apps
+- Full-screen overlay blocker via FocusService when blocked app is opened
+- Integration with existing per-app blocking system
+
+J. Text Contrast & Accessibility
+- Consistent text color contrast across dark theme
+- AppTheme.darkTextSec (#8B8FA3) used for secondary text instead of Colors.grey
+- Improved icon opacity for interactive elements (settings, navigation arrows, logout)
+
+
+3) Navigation Flow (Bottom Menu)
+--------------------------------
+Current intended order:
+1. Home
+2. Focus
+3. Community
+4. Profile
+5. Garden (always last)
+
+Profile screen includes direct Settings access.
+
+
+4) Software Flow (End-to-End)
+-----------------------------
+A. Startup Flow
+1. App boots -> Firebase initialization.
+2. Splash screen shown.
+3. Auth state evaluated:
+   - Authenticated user -> Main screen
+   - Offline mode -> Main screen
+   - No auth -> Login screen
+
+B. Focus Session Flow
+1. User configures focus settings.
+2. User starts focus session.
+3. App applies blockers + DND (Android where available).
+4. Timer ticks + anti-cheat checks.
+5. On completion:
+   - Session persisted
+   - Stats updated
+   - Break started
+   - Widget state refreshed
+
+C. Community Collaboration Flow
+1. User creates or joins a community (code-based).
+2. Member creates room inside community.
+3. Other members join room by room code.
+4. Members chat, run timer, and poke each other.
+5. Session can end without deleting community/room context.
+
+D. Reward Progression Flow
+1. User completes productive actions.
+2. XP/gold/reward economy updates.
+3. Forest rewards become purchasable/unlocked.
+4. Profile progression updates UI and account metrics.
+
+E. Settings & Personalization Flow
+1. User opens Profile -> Settings.
+2. Changes are persisted to local storage/provider state.
+3. Runtime systems (focus engine/widget/locale) react immediately.
+
+
+5) Engineering Notes
+--------------------
+- Architecture: Provider-based state management with feature-specific providers.
+- Persistence: SQLite + SharedPreferences + Firebase Auth.
+- Platform integration: Android native Kotlin channel (com.monojog.app/focus) for:
+  - Focus mode app blocking (FocusService with full-screen overlay)
+  - DND mode control
+  - Usage stats permission management
+  - Installed apps enumeration
+  - Social media app detection and one-tap blocking
+  - Wake-up alarm scheduling (AlarmReceiver + AlarmManager)
+  - Home widget state updates
+- Error handling: Provider-level catch + user-facing snackbars/dialogs.
+- UX model: Dark modern neumorphic, modular tabs, context-aware controls.
+- Task Timer: Per-task elapsed seconds with Timer.periodic in TaskProvider.
+- Sleep AI: Pattern-based suggestion engine analyzing weekly sleep data.
+
+
+6) Production Readiness Checklist
+---------------------------------
+- [x] Build pipeline for Android APK
+- [x] Persistent settings controls
+- [x] Community + room collaboration model
+- [x] Forest reward redesign
+- [x] Profile/Settings visibility in primary nav
+- [x] Android home widget integration baseline
+- [x] Task management with calendar, time tracking, subtasks, analytics
+- [x] Sleep tracking with alarm, bedtime countdown, AI suggestions, analysis
+- [x] Social media detection and one-tap blocking (Kotlin native)
+- [x] Text contrast and accessibility fixes across dark theme
+- [x] Native alarm scheduling via AlarmReceiver
+- [ ] Backend sync for multi-device real-time communities (future phase)
+- [ ] Push notification-based poke delivery (future phase)
