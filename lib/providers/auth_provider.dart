@@ -15,6 +15,9 @@ class AuthProvider with ChangeNotifier {
   bool _isOfflineModeLoaded = false;
 
   static const String _offlineModeKey = 'is_offline_mode';
+  static const String _avatarKey = 'profile.avatar';
+
+  String _avatarType = 'warrior';
 
   // ── Getters ──────────────────────────────────────────────────────────────
   User? get user => _user;
@@ -25,6 +28,7 @@ class AuthProvider with ChangeNotifier {
   bool get isInitialized => _isInitialized;
   bool get isEmailVerified => _user?.emailVerified ?? false;
   bool get isOfflineModeLoaded => _isOfflineModeLoaded;
+  String get avatarType => _avatarType;
 
   AuthProvider() {
     _initAuth();
@@ -34,6 +38,7 @@ class AuthProvider with ChangeNotifier {
   void _initAuth() async {
     final prefs = await SharedPreferences.getInstance();
     _isOfflineMode = prefs.getBool(_offlineModeKey) ?? false;
+    _avatarType = prefs.getString(_avatarKey) ?? 'warrior';
     _isOfflineModeLoaded = true;
     notifyListeners();
 
@@ -126,7 +131,8 @@ class AuthProvider with ChangeNotifier {
   }
 
   // ── Email Sign Up ────────────────────────────────────────────────────────
-  Future<bool> signUpWithEmail(String name, String email, String password) async {
+  Future<bool> signUpWithEmail(
+      String name, String email, String password) async {
     try {
       _setLoading(true);
       _clearErrorSilent();
@@ -218,6 +224,90 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // ── Delete Account ───────────────────────────────────────────────────────
+  /// Email user হলে password দিয়ে re-authenticate করে delete করে।
+  /// Google user হলে Google re-authenticate করে delete করে।
+  Future<bool> deleteAccount({String password = ''}) async {
+    try {
+      _setLoading(true);
+      _clearErrorSilent();
+
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        _error = 'No user is currently signed in.';
+        _setLoading(false);
+        return false;
+      }
+
+      final isGoogleUser =
+      currentUser.providerData.any((p) => p.providerId == 'google.com');
+
+      if (isGoogleUser) {
+        // Google re-authentication
+        try {
+          final googleUser = await _googleSignIn.signIn();
+          if (googleUser == null) {
+            _setLoading(false);
+            return false;
+          }
+          final googleAuth = await googleUser.authentication;
+          final credential = GoogleAuthProvider.credential(
+            accessToken: googleAuth.accessToken,
+            idToken: googleAuth.idToken,
+          );
+          await currentUser.reauthenticateWithCredential(credential);
+        } catch (e) {
+          _error = 'Re-authentication failed. Please try again.';
+          _setLoading(false);
+          return false;
+        }
+      } else {
+        // Email/password re-authentication
+        if (password.isEmpty) {
+          _error = 'Please enter your password to confirm.';
+          _setLoading(false);
+          return false;
+        }
+        try {
+          final email = currentUser.email ?? '';
+          final credential = EmailAuthProvider.credential(
+            email: email,
+            password: password,
+          );
+          await currentUser.reauthenticateWithCredential(credential);
+        } on FirebaseAuthException catch (e) {
+          _error = _mapFirebaseError(e.code);
+          _setLoading(false);
+          return false;
+        }
+      }
+
+      // Firebase account delete
+      await currentUser.delete();
+
+      // Local cleanup
+      _isOfflineMode = false;
+      await _saveOfflineMode(false);
+      _user = null;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      _setLoading(false);
+      notifyListeners();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _error = _mapFirebaseError(e.code);
+      _setLoading(false);
+      return false;
+    } catch (e) {
+      _error = 'Account deletion failed. Please try again.';
+      debugPrint('Delete Account Error: $e');
+      _setLoading(false);
+      return false;
+    }
+  }
+
   // ── Offline Mode ─────────────────────────────────────────────────────────
   Future<void> enterOfflineMode() async {
     _isOfflineMode = true;
@@ -228,13 +318,34 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // ── Update Display Name ──────────────────────────────────────────────────
+  Future<bool> updateDisplayName(String name) async {
+    try {
+      if (name.trim().isEmpty) return false;
+      await _auth.currentUser?.updateDisplayName(name.trim());
+      await _auth.currentUser?.reload();
+      _user = _auth.currentUser;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Update display name error: $e');
+      return false;
+    }
+  }
+
+  // ── Update Avatar ────────────────────────────────────────────────────────
+  Future<void> updateAvatar(String avatarType) async {
+    _avatarType = avatarType;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_avatarKey, avatarType);
+    notifyListeners();
+  }
+
   // ── SharedPreferences Helper ─────────────────────────────────────────────
   Future<void> _saveOfflineMode(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_offlineModeKey, value);
   }
-
-
 
   // ── Helpers ──────────────────────────────────────────────────────────────
   void clearError() {

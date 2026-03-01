@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:monojog/start_page/verification.dart';
 import 'package:provider/provider.dart';
 import 'package:monojog/providers/auth_provider.dart';
 import 'package:monojog/start_page/forget_pass.dart';
@@ -39,12 +40,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // ✅ Keyboard dismiss before loading
     FocusScope.of(context).unfocus();
 
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
 
     final auth = context.read<AuthProvider>();
     final success = await auth.signInWithEmail(
@@ -53,21 +51,42 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (!mounted) return;
-
     setState(() => isLoading = false);
 
-    if (success) {
+    if (!success) {
+      _showErrorSnackbar(auth.error ?? 'Login failed. Please try again.');
+      return;
+    }
+
+    // ── Email verification check ──────────────────────────────────────
+    // Google sign-in এ verification লাগে না, শুধু email/password এ লাগে
+    final isVerified = await auth.checkEmailVerified();
+    if (!mounted) return;
+
+    if (!isVerified) {
+      // Sign out করে verification screen এ পাঠাও
+      // (sign out না করলে unverified user logged-in থাকবে)
+      await auth.signOut();
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CheckEmailScreen(
+            email: _emailCtrl.text.trim(),
+            mode: CheckEmailMode.verification,
+          ),
+        ),
+      );
+    } else {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainScreen()),
       );
-    } else {
-      _showErrorSnackbar(auth.error ?? 'Login failed. Please try again.');
     }
   }
 
   // ── Firebase Google Sign In ───────────────────────────────────────────
-
   Future<void> _handleGoogleSignIn() async {
     setState(() => isGoogleLoading = true);
 
@@ -78,6 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => isGoogleLoading = false);
 
     if (success) {
+      // Google account সবসময় verified থাকে
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainScreen()),
@@ -112,15 +132,14 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Row(
             children: [
               Icon(Icons.error_outline_rounded,
-                  color: isDark? Colors.black : Colors.white, size: 18),
+                  color: isDark ? Colors.black : Colors.white, size: 18),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   message,
                   style: GoogleFonts.inter(
                       fontSize: 13,
-                      color: isDark? Colors.black : Colors.white
-                  ),
+                      color: isDark ? Colors.black : Colors.white),
                 ),
               ),
             ],
@@ -138,7 +157,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
 
     final bgColor = isDark ? AppTheme.darkBg : const Color(0xFFF5F4FF);
     final cardColor =
@@ -163,14 +181,12 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: bgColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding:
-          const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 24),
               // Logo
-
               Container(
                 width: 84,
                 height: 84,
@@ -188,7 +204,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 child: Image.asset(
                   'assets/images/tree.png',
-                  // ✅ Performance: image cache
                   cacheWidth: 168,
                   cacheHeight: 168,
                 ),
@@ -220,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 32),
 
-              //Main Card
+              // Main Card
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -239,17 +254,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 child: Column(
                   children: [
-                    //Google Button
+                    // Google Button
                     _buildGoogleButton(isDark, isGoogleLoading),
 
                     const SizedBox(height: 22),
 
-                    //Divider
+                    // Divider
                     _buildDivider(dividerColor, textSecondary),
 
                     const SizedBox(height: 22),
 
-                    //Form
+                    // Form
                     Form(
                       key: _formKey,
                       child: Column(
@@ -292,8 +307,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: textSecondary,
                                 size: 20,
                               ),
-                              onPressed: () => setState(
-                                      () => _obscurePass = !_obscurePass),
+                              onPressed: () =>
+                                  setState(() => _obscurePass = !_obscurePass),
                             ),
                             validator: _validatePassword,
                           ),
@@ -303,7 +318,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 8),
 
-                    //Forgot Password
+                    // Forgot Password
                     Align(
                       alignment: Alignment.centerRight,
                       child: GestureDetector(
@@ -311,8 +326,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) =>
-                                const ForgotPasswordScreen()),
+                                builder: (_) => const ForgotPasswordScreen()),
                           ),
                           setState(() {
                             _emailCtrl.clear();
@@ -320,8 +334,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           }),
                         },
                         child: Padding(
-                          padding:
-                          const EdgeInsets.symmetric(vertical: 6),
+                          padding: const EdgeInsets.symmetric(vertical: 6),
                           child: Text(
                             'Forgot password?',
                             style: GoogleFonts.inter(
@@ -338,7 +351,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 20),
 
-                    //Submit Button
+                    // Submit Button
                     _buildSubmitButton(isDark, isLoading),
                   ],
                 ),
@@ -346,7 +359,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 24),
 
-              //Sign Up Link
+              // Sign Up Link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -385,12 +398,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 20),
 
-              //Bottom Divider
+              // Bottom Divider
               _buildDivider(dividerColor, textSecondary),
 
               const SizedBox(height: 20),
 
-              //Offline Mode Button
+              // Offline Mode Button
               _buildOfflineButton(isDark, isOffLoading),
 
               const SizedBox(height: 24),
@@ -401,7 +414,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  //Google Sign In Button
+  // ── Google Sign In Button ─────────────────────────────────────────────
   Widget _buildGoogleButton(bool isDark, bool isLoading) {
     return SizedBox(
       width: double.infinity,
@@ -420,15 +433,17 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           elevation: 0,
         ),
-        child: isLoading? SizedBox(
+        child: isLoading
+            ? SizedBox(
           width: 20,
           height: 20,
           child: CircularProgressIndicator(
-            color: isDark? Colors.white : Colors.black,
-            backgroundColor: isDark? Colors.black : Colors.white ,
+            color: isDark ? Colors.white : Colors.black,
+            backgroundColor: isDark ? Colors.black : Colors.white,
             strokeWidth: 2,
           ),
-        ) : Row(
+        )
+            : Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
@@ -547,7 +562,9 @@ class _LoginScreenState extends State<LoginScreen> {
         style: OutlinedButton.styleFrom(
           padding: EdgeInsets.zero,
           side: BorderSide(
-            color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.grey.shade300,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.3)
+                : Colors.grey.shade300,
             width: 1.5,
           ),
           backgroundColor: Colors.transparent,
@@ -557,13 +574,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         child: Ink(
           decoration: BoxDecoration(
-            gradient: isDark
-                ? const LinearGradient(
-              colors: [Color(0xFF7C4DFF), Color(0xFF2979FF)],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            )
-                : const LinearGradient(
+            gradient: const LinearGradient(
               colors: [Color(0xFF7C4DFF), Color(0xFF2979FF)],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
@@ -573,14 +584,16 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Container(
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(vertical: 14),
-            child: isLoading? const SizedBox(
+            child: isLoading
+                ? const SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
                 color: Colors.white,
                 strokeWidth: 2,
               ),
-            ) : Text(
+            )
+                : Text(
               'Sign In',
               style: GoogleFonts.inter(
                 fontSize: 15,
@@ -603,31 +616,33 @@ class _LoginScreenState extends State<LoginScreen> {
         onPressed: isLoading ? null : _handleOfflineMode,
         style: OutlinedButton.styleFrom(
           side: BorderSide(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.8)
-                : Colors.black54,
+            color: isDark ? Colors.white.withValues(alpha: 0.8) : Colors.black54,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          foregroundColor:  isDark? Colors.white70 : Colors.black54,
+          foregroundColor: isDark ? Colors.white70 : Colors.black54,
         ),
-        icon: isLoading? null : Icon(
+        icon: isLoading
+            ? null
+            : Icon(
           Icons.wifi_off_rounded,
           size: 17,
-          color: isDark? Colors.white : Colors.black,
+          color: isDark ? Colors.white : Colors.black,
         ),
-        label: isLoading? SizedBox(
+        label: isLoading
+            ? SizedBox(
           width: 20,
           height: 20,
           child: CircularProgressIndicator(
-            color: isDark? Colors.white : Colors.black,
+            color: isDark ? Colors.white : Colors.black,
             strokeWidth: 2,
           ),
-        ) : Text(
+        )
+            : Text(
           'Continue Offline',
           style: TextStyle(
-            color: isDark? Colors.white : Colors.black,
+            color: isDark ? Colors.white : Colors.black,
             fontSize: 14,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
@@ -639,7 +654,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // ── Validators ────────────────────────────────────────────────────────
   String? _validateEmail(String? value) {
-
     if (value == null || value.trim().isEmpty) {
       return 'Please enter your email address';
     }

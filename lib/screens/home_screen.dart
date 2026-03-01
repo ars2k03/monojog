@@ -17,7 +17,6 @@ class HomeScreen extends StatelessWidget {
   final void Function(int)? onSwitchTab;
   const HomeScreen({super.key, this.onSwitchTab});
 
-  static const _currentStreak    = 0;
   static const _level            = 1;
   static const _levelTitle       = 'Beginner';
   static const _experience       = 0;
@@ -27,7 +26,7 @@ class HomeScreen extends StatelessWidget {
   static const _sessionsDone     = 0;
   static const _gold             = 0;
   static const _gems             = 0;
-  static const _avatarType       = 'warrior';
+  static const _currentStreak    = 0;
   static const _habitsScheduled  = 0;
   static const _habitsDone       = 0;
   static const _todayTasks       = 0;
@@ -38,11 +37,12 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final authProvider = Provider.of<AuthProvider>(context);
-    final username = authProvider.user?.displayName ??
-        (authProvider.isOfflineMode ? 'Offline User' : 'Student');
+    // ── watch AuthProvider তাই name/avatar চেঞ্জ হলে rebuild হবে ──
+    final auth = context.watch<AuthProvider>();
+    final username = auth.user?.displayName ??
+        (auth.isOfflineMode ? 'Offline User' : 'Student');
+    final avatarType = auth.avatarType;
 
-    // Adaptive Colors
     final textPrimary   = isDark ? Colors.white : const Color(0xFF1A1A2E);
     final textSecondary = isDark ? AppTheme.darkTextSec : Colors.grey.shade600;
     final cardBg        = isDark ? const Color(0xFF1E1E2E) : Colors.white;
@@ -55,15 +55,16 @@ class HomeScreen extends StatelessWidget {
 
     return CustomScrollView(
       slivers: [
-        // App Bar
+        // ── App Bar ───────────────────────────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
             child: Row(
               children: [
-                // Avatar
+                // Avatar — auth থেকে avatarType নেওয়া হচ্ছে
                 GestureDetector(
-                  onTap: () => _showProfileEditSheet(context, username, isDark),
+                  onTap: () => _showProfileEditSheet(
+                      context, username, avatarType, isDark),
                   child: Container(
                     width: 48,
                     height: 48,
@@ -80,7 +81,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        _avatarEmoji(_avatarType),
+                        _avatarEmoji(avatarType),
                         style: const TextStyle(fontSize: 22),
                       ),
                     ),
@@ -453,14 +454,17 @@ class HomeScreen extends StatelessWidget {
     }
   }
 
-  void _showProfileEditSheet(BuildContext context, String currentName, bool isDark) {
+  // ── Profile Edit Sheet ────────────────────────────────────────────────────
+  void _showProfileEditSheet(
+      BuildContext context, String currentName, String currentAvatar, bool isDark) {
     final nameController = TextEditingController(text: currentName);
-    String selectedAvatar = _avatarType;
+    // local state শুধু bottom sheet এর মধ্যে
+    String selectedAvatar = currentAvatar;
     final avatars = ['warrior', 'mage', 'healer', 'rogue'];
 
-    final sheetBg      = isDark ? AppTheme.darkCard : Colors.white;
-    final inputFill    = isDark ? AppTheme.darkBg : Colors.grey.shade100;
-    final textPrimary  = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final sheetBg       = isDark ? AppTheme.darkCard : Colors.white;
+    final inputFill     = isDark ? AppTheme.darkBg : Colors.grey.shade100;
+    final textPrimary   = isDark ? Colors.white : const Color(0xFF1A1A2E);
     final textSecondary = isDark ? AppTheme.darkTextSec : Colors.grey.shade600;
 
     showModalBottomSheet(
@@ -582,7 +586,8 @@ class HomeScreen extends StatelessWidget {
                   ),
                   hintText: 'Enter your name',
                   hintStyle: GoogleFonts.inter(color: textSecondary),
-                  prefixIcon: Icon(Icons.person_outline, color: textSecondary),
+                  prefixIcon:
+                  Icon(Icons.person_outline, color: textSecondary),
                 ),
               ),
 
@@ -593,21 +598,20 @@ class HomeScreen extends StatelessWidget {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () async {
+                    final authProvider =
+                    Provider.of<AuthProvider>(context, listen: false);
+
+                    // ── নাম update — AuthProvider এর method দিয়ে ──
                     final newName = nameController.text.trim();
-                    if (newName.isNotEmpty) {
-                      final authProvider =
-                      Provider.of<AuthProvider>(ctx, listen: false);
-                      final user = authProvider.user;
-                      if (user != null) {
-                        try {
-                          await user.updateDisplayName(newName);
-                          await user.reload();
-                          authProvider.clearError();
-                        } catch (e) {
-                          debugPrint('Update name error: $e');
-                        }
-                      }
+                    if (newName.isNotEmpty && newName != currentName) {
+                      await authProvider.updateDisplayName(newName);
                     }
+
+                    // ── Avatar update — AuthProvider এ save ও notify ──
+                    if (selectedAvatar != currentAvatar) {
+                      await authProvider.updateAvatar(selectedAvatar);
+                    }
+
                     if (ctx.mounted) Navigator.pop(ctx);
                   },
                   style: ElevatedButton.styleFrom(
@@ -679,23 +683,18 @@ class HomeScreen extends StatelessWidget {
         mainAxisSpacing: 12,
       ),
       itemCount: features.length,
-      itemBuilder: (ctx, i) => _FeatureCard(feature: features[i], isDark: isDark),
+      itemBuilder: (ctx, i) =>
+          _FeatureCard(feature: features[i], isDark: isDark),
     );
   }
 }
 
 // ── Level Card ────────────────────────────────────────────────────────────────
 class _LevelCard extends StatelessWidget {
-  final int level;
+  final int level, experience, experienceToNext, health;
   final String levelTitle;
-  final int experience;
-  final int experienceToNext;
-  final int health;
   final bool isDark;
-  final Color cardBg;
-  final Color cardBorder;
-  final Color textPrimary;
-  final Color textSecondary;
+  final Color cardBg, cardBorder, textPrimary, textSecondary;
 
   const _LevelCard({
     required this.level,
@@ -752,23 +751,17 @@ class _LevelCard extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      '$level',
-                      style: GoogleFonts.inter(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      'LVL',
-                      style: GoogleFonts.inter(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: 1,
-                      ),
-                    ),
+                    Text('$level',
+                        style: GoogleFonts.inter(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white)),
+                    Text('LVL',
+                        style: GoogleFonts.inter(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 1)),
                   ],
                 ),
               ),
@@ -777,23 +770,17 @@ class _LevelCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      levelTitle,
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: textPrimary,
-                      ),
-                    ),
+                    Text(levelTitle,
+                        style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: textPrimary)),
                     const SizedBox(height: 4),
-                    Text(
-                      '$experience / $experienceToNext XP',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: textSecondary,
-                      ),
-                    ),
+                    Text('$experience / $experienceToNext XP',
+                        style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: textSecondary)),
                   ],
                 ),
               ),
@@ -804,25 +791,19 @@ class _LevelCard extends StatelessWidget {
                     children: [
                       const Text('❤️', style: TextStyle(fontSize: 12)),
                       const SizedBox(width: 4),
-                      Text(
-                        '$health',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.healthRed,
-                        ),
-                      ),
+                      Text('$health',
+                          style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.healthRed)),
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    'HP',
-                    style: GoogleFonts.inter(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: textSecondary,
-                    ),
-                  ),
+                  Text('HP',
+                      style: GoogleFonts.inter(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: textSecondary)),
                 ],
               ),
             ],
@@ -866,11 +847,8 @@ class _LevelCard extends StatelessWidget {
 // ── Stat Chip ─────────────────────────────────────────────────────────────────
 class _StatChip extends StatelessWidget {
   final IconData icon;
-  final String value;
-  final String unit;
-  final Color color;
-  final Color textPrimary;
-  final Color textSecondary;
+  final String value, unit;
+  final Color color, textPrimary, textSecondary;
 
   const _StatChip({
     required this.icon,
@@ -895,22 +873,16 @@ class _StatChip extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 18),
             const SizedBox(height: 6),
-            Text(
-              value,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-                color: textPrimary,
-              ),
-            ),
-            Text(
-              unit,
-              style: GoogleFonts.inter(
-                fontSize: 9,
-                fontWeight: FontWeight.w500,
-                color: textSecondary,
-              ),
-            ),
+            Text(value,
+                style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: textPrimary)),
+            Text(unit,
+                style: GoogleFonts.inter(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w500,
+                    color: textSecondary)),
           ],
         ),
       ),
@@ -920,12 +892,10 @@ class _StatChip extends StatelessWidget {
 
 // ── Start Focus CTA ───────────────────────────────────────────────────────────
 class _StartFocusCTA extends StatelessWidget {
-  final bool isFocusActive;
+  final bool isFocusActive, isDark;
   final String focusRemaining;
   final void Function(int)? onSwitchTab;
-  final bool isDark;
-  final Color textPrimary;
-  final Color textSecondary;
+  final Color textPrimary, textSecondary;
 
   const _StartFocusCTA({
     required this.isFocusActive,
@@ -954,16 +924,14 @@ class _StartFocusCTA extends StatelessWidget {
                 : null,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: const Color(0xFF7C4DFF).withValues(alpha: 0.3),
-            ),
+                color: const Color(0xFF7C4DFF).withValues(alpha: 0.3)),
             boxShadow: isDark
                 ? []
                 : [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4))
             ],
           ),
           child: Row(
@@ -974,13 +942,11 @@ class _StartFocusCTA extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF7C4DFF), Color(0xFF2979FF)],
-                  ),
+                      colors: [Color(0xFF7C4DFF), Color(0xFF2979FF)]),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF7C4DFF).withValues(alpha: 0.3),
-                      blurRadius: 12,
-                    ),
+                        color: const Color(0xFF7C4DFF).withValues(alpha: 0.3),
+                        blurRadius: 12)
                   ],
                 ),
                 child: const Icon(Icons.rocket_launch_rounded,
@@ -991,23 +957,17 @@ class _StartFocusCTA extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Session In Progress',
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: textPrimary,
-                      ),
-                    ),
+                    Text('Session In Progress',
+                        style: GoogleFonts.inter(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: textPrimary)),
                     const SizedBox(height: 4),
-                    Text(
-                      '$focusRemaining remaining',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF7C4DFF),
-                      ),
-                    ),
+                    Text('$focusRemaining remaining',
+                        style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF7C4DFF))),
                   ],
                 ),
               ),
@@ -1043,22 +1003,20 @@ class _StartFocusCTA extends StatelessWidget {
               : null,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppTheme.primaryColor.withValues(alpha: isDark ? 0.15 : 0.2),
-          ),
+              color: AppTheme.primaryColor
+                  .withValues(alpha: isDark ? 0.15 : 0.2)),
           boxShadow: isDark
               ? [
             BoxShadow(
-              color: AppTheme.primaryColor.withValues(alpha: 0.06),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
+                color: AppTheme.primaryColor.withValues(alpha: 0.06),
+                blurRadius: 20,
+                offset: const Offset(0, 8))
           ]
               : [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4))
           ],
         ),
         child: Row(
@@ -1071,9 +1029,8 @@ class _StartFocusCTA extends StatelessWidget {
                 gradient: AppTheme.primaryGradient,
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                  ),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                      blurRadius: 12)
                 ],
               ),
               child: const Icon(Icons.play_arrow_rounded,
@@ -1084,41 +1041,33 @@ class _StartFocusCTA extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Start Focus Session',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: textPrimary,
-                    ),
-                  ),
+                  Text('Start Focus Session',
+                      style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: textPrimary)),
                   const SizedBox(height: 4),
-                  Text(
-                    'Tap to begin deep focus mode',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: textSecondary,
-                    ),
-                  ),
+                  Text('Tap to begin deep focus mode',
+                      style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: textSecondary)),
                 ],
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 gradient: AppTheme.primaryGradient,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(
-                'GO',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: 1,
-                ),
-              ),
+              child: Text('GO',
+                  style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 1)),
             ),
           ],
         ),
@@ -1129,15 +1078,9 @@ class _StartFocusCTA extends StatelessWidget {
 
 // ── My Day Quick Card ─────────────────────────────────────────────────────────
 class _MyDayQuickCard extends StatelessWidget {
-  final int todayTasks;
-  final int todayDone;
-  final int habitsScheduled;
-  final int habitsDone;
+  final int todayTasks, todayDone, habitsScheduled, habitsDone;
   final bool isDark;
-  final Color textPrimary;
-  final Color textSecondary;
-  final Color cardBg;
-  final Color cardBorder;
+  final Color textPrimary, textSecondary, cardBg, cardBorder;
 
   const _MyDayQuickCard({
     required this.todayTasks,
@@ -1179,10 +1122,9 @@ class _MyDayQuickCard extends StatelessWidget {
               ? []
               : [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 4))
           ],
         ),
         child: Row(
@@ -1192,8 +1134,7 @@ class _MyDayQuickCard extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF00E5FF), Color(0xFF7C4DFF)],
-                ),
+                    colors: [Color(0xFF00E5FF), Color(0xFF7C4DFF)]),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: const Icon(Icons.today_rounded,
@@ -1204,24 +1145,20 @@ class _MyDayQuickCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'My Day',
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: textPrimary,
-                    ),
-                  ),
+                  Text('My Day',
+                      style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: textPrimary)),
                   const SizedBox(height: 2),
                   Text(
                     totalActive == 0
                         ? 'No items for today'
                         : '$totalDone/$totalActive done · ${todayTasks}T ${habitsScheduled}H',
                     style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: textSecondary,
-                    ),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: textSecondary),
                   ),
                 ],
               ),
@@ -1246,11 +1183,7 @@ class _MyDayQuickCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
             ],
-            Icon(
-              Icons.chevron_right_rounded,
-              color: textSecondary,
-              size: 22,
-            ),
+            Icon(Icons.chevron_right_rounded, color: textSecondary, size: 22),
           ],
         ),
       ),
@@ -1261,11 +1194,9 @@ class _MyDayQuickCard extends StatelessWidget {
 // ── Feature Model ─────────────────────────────────────────────────────────────
 class _Feature {
   final IconData icon;
-  final String title;
-  final String subtitle;
+  final String title, subtitle;
   final List<Color> gradient;
   final VoidCallback onTap;
-
   const _Feature(this.icon, this.title, this.subtitle, this.gradient, this.onTap);
 }
 
@@ -1313,10 +1244,9 @@ class _FeatureCardState extends State<_FeatureCard> {
                 ? []
                 : [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2))
             ],
           ),
           child: Column(
