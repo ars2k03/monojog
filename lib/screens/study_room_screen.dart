@@ -9,20 +9,54 @@ import 'package:monojog/providers/game_provider.dart';
 import 'package:monojog/models/study_room.dart';
 import 'package:monojog/screens/community_screen.dart';
 
-// Ultra-modern room palette
+// Ultra-modern room palette — light/dark adaptive
 class _R {
-  static const bg = Color(0xFF0A0E1A);
-  static const card = Color(0xFF141828);
-  static const cardLight = Color(0xFF1C2137);
-  static const surface = Color(0xFF1A1F33);
-  static const cyan = Color(0xFF00E5FF);
-  static const cyanDark = Color(0xFF00ACC1);
+  // Dark mode colors
+  static const _bgDark = Color(0xFF0A0E1A);
+  static const _cardDark = Color(0xFF141828);
+  static const _cardLightDark = Color(0xFF1C2137);
+  static const _surfaceDark = Color(0xFF1A1F33);
+
+  // Light mode colors
+  static const _bgLight = Color(0xFFF5F7FF);
+  static const _cardLight = Color(0xFFFFFFFF);
+  static const _cardLightLight = Color(0xFFEEF0FA);
+  static const _surfaceLight = Color(0xFFE8EAF6);
+
+  // Accent colors (same for both modes)
+  static const cyan = Color(0xFF00ACC1);
+  static const cyanDark = Color(0xFF00838F);
   static const purple = Color(0xFF7C4DFF);
-  static const gold = Color(0xFFFFD700);
-  static const green = Color(0xFF66FFCC);
-  static const red = Color(0xFFFF6B6B);
+  static const gold = Color(0xFFFFB300);
+  static const green = Color(0xFF00BFA5);
+  static const red = Color(0xFFEF5350);
   static const white = Colors.white;
-  static const textSec = Color(0xFF6B7294);
+
+  // Dynamic getters
+  static Color bg(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? _bgDark : _bgLight;
+  static Color card(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? _cardDark : _cardLight;
+  static Color cardLight(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? _cardLightDark
+          : _cardLightLight;
+  static Color surface(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? _surfaceDark
+          : _surfaceLight;
+  static Color textPrimary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? Colors.white
+          : const Color(0xFF1A1F33);
+  static Color textSec(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF6B7294)
+          : const Color(0xFF757B9A);
+  static Color border(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1C2137)
+          : const Color(0xFFDDE0F0);
 }
 
 class StudyRoomScreen extends StatefulWidget {
@@ -85,8 +119,9 @@ class _RoomLobbyState extends State<_RoomLobby>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: _R.bg,
+      backgroundColor: _R.bg(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -97,8 +132,6 @@ class _RoomLobbyState extends State<_RoomLobby>
               _buildHeader(),
               const SizedBox(height: 16),
               _buildPlayerStatsBar(),
-              const SizedBox(height: 16),
-              _buildHeroCard(),
               const SizedBox(height: 16),
               _buildCommunityButton(),
               const SizedBox(height: 20),
@@ -124,7 +157,7 @@ class _RoomLobbyState extends State<_RoomLobby>
   Widget _buildHeader() {
     return Row(
       children: [
-        const Column(
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -132,17 +165,17 @@ class _RoomLobbyState extends State<_RoomLobby>
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w900,
-                color: _R.white,
+                color: _R.textPrimary(context),
                 letterSpacing: -0.5,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               'Focus together, grow together',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: _R.textSec,
+                color: _R.textSec(context),
               ),
             ),
           ],
@@ -154,15 +187,22 @@ class _RoomLobbyState extends State<_RoomLobby>
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: _R.card,
+              color: _R.card(context),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: _R.cyan.withValues(alpha: 0.15),
+                color: _R.cyan.withValues(alpha: 0.2),
                 width: 1,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                )
+              ],
             ),
             child:
-                const Icon(Icons.grid_view_rounded, color: _R.cyan, size: 22),
+            const Icon(Icons.grid_view_rounded, color: _R.cyan, size: 22),
           ),
         ),
       ],
@@ -173,18 +213,24 @@ class _RoomLobbyState extends State<_RoomLobby>
     final game = context.watch<GameProvider>();
     final p = game.profile;
     final xpPct =
-        p.experienceToNext > 0 ? p.experience / p.experienceToNext : 0.0;
+    p.experienceToNext > 0 ? p.experience / p.experienceToNext : 0.0;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _R.card,
+        color: _R.card(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _R.cardLight, width: 1),
+        border: Border.all(color: _R.border(context), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          )
+        ],
       ),
       child: Row(
         children: [
-          // Level badge
           Container(
             width: 46,
             height: 46,
@@ -215,17 +261,16 @@ class _RoomLobbyState extends State<_RoomLobby>
             ),
           ),
           const SizedBox(width: 12),
-          // XP bar
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       'Level ',
                       style: TextStyle(
-                        color: _R.textSec,
+                        color: _R.textSec(context),
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -241,8 +286,8 @@ class _RoomLobbyState extends State<_RoomLobby>
                     const Spacer(),
                     Text(
                       '${p.experience}/${p.experienceToNext} XP',
-                      style: const TextStyle(
-                        color: _R.textSec,
+                      style: TextStyle(
+                        color: _R.textSec(context),
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                       ),
@@ -255,7 +300,7 @@ class _RoomLobbyState extends State<_RoomLobby>
                     Container(
                       height: 6,
                       decoration: BoxDecoration(
-                        color: _R.surface,
+                        color: _R.surface(context),
                         borderRadius: BorderRadius.circular(3),
                       ),
                     ),
@@ -265,7 +310,7 @@ class _RoomLobbyState extends State<_RoomLobby>
                         height: 6,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF7C4DFF), Color(0xFF00E5FF)],
+                            colors: [Color(0xFF7C4DFF), Color(0xFF00ACC1)],
                           ),
                           borderRadius: BorderRadius.circular(3),
                         ),
@@ -277,11 +322,10 @@ class _RoomLobbyState extends State<_RoomLobby>
             ),
           ),
           const SizedBox(width: 14),
-          // Gold
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: _R.gold.withValues(alpha: 0.1),
+              color: _R.gold.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -302,7 +346,6 @@ class _RoomLobbyState extends State<_RoomLobby>
             ),
           ),
           const SizedBox(width: 8),
-          // HP
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
@@ -328,10 +371,6 @@ class _RoomLobbyState extends State<_RoomLobby>
         ],
       ),
     );
-  }
-
-  Widget _buildHeroCard() {
-    return const SizedBox.shrink();
   }
 
   Widget _buildModeSelector() {
@@ -371,65 +410,66 @@ class _RoomLobbyState extends State<_RoomLobby>
       ),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              _R.purple.withValues(alpha: 0.15),
-              _R.cyan.withValues(alpha: 0.08),
+              _R.purple.withValues(alpha: 0.12),
+              _R.cyan.withValues(alpha: 0.06),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: _R.purple.withValues(alpha: 0.3),
+            color: _R.purple.withValues(alpha: 0.25),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: _R.purple.withValues(alpha: 0.1),
-              blurRadius: 20,
-              spreadRadius: -5,
+              color: _R.purple.withValues(alpha: 0.08),
+              blurRadius: 16,
+              spreadRadius: -3,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Row(
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 52,
+              height: 52,
               decoration: BoxDecoration(
-                color: _R.purple.withValues(alpha: 0.2),
+                color: _R.purple.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: _R.purple.withValues(alpha: 0.5),
+                  color: _R.purple.withValues(alpha: 0.4),
                   width: 2,
                 ),
               ),
-              child:
-                  const Icon(Icons.groups_rounded, color: _R.purple, size: 28),
+              child: const Icon(Icons.groups_rounded,
+                  color: _R.purple, size: 26),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     community != null ? community.name : 'Communities',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
+                    style: TextStyle(
+                      color: _R.textPrimary(context),
+                      fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Text(
                     community != null
                         ? '${community.members.length} members • Tap to chat'
                         : 'Join a group to study together',
-                    style: const TextStyle(
-                      color: _R.textSec,
+                    style: TextStyle(
+                      color: _R.textSec(context),
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
@@ -438,7 +478,7 @@ class _RoomLobbyState extends State<_RoomLobby>
               ),
             ),
             const Icon(Icons.arrow_forward_ios_rounded,
-                color: _R.purple, size: 20),
+                color: _R.purple, size: 18),
           ],
         ),
       ),
@@ -457,12 +497,19 @@ class _RoomLobbyState extends State<_RoomLobby>
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: _R.card,
+          color: _R.card(context),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: color.withValues(alpha: 0.12),
+            color: color.withValues(alpha: 0.2),
             width: 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            )
+          ],
         ),
         child: Column(
           children: [
@@ -478,19 +525,19 @@ class _RoomLobbyState extends State<_RoomLobby>
             const SizedBox(height: 12),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
-                color: _R.white,
+                color: _R.textPrimary(context),
               ),
             ),
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: _R.textSec,
+                color: _R.textSec(context),
               ),
             ),
           ],
@@ -505,12 +552,12 @@ class _RoomLobbyState extends State<_RoomLobby>
       children: [
         Row(
           children: [
-            const Text(
+            Text(
               'Choose your plant',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
-                color: _R.white,
+                color: _R.textPrimary(context),
               ),
             ),
             const Spacer(),
@@ -540,13 +587,21 @@ class _RoomLobbyState extends State<_RoomLobby>
                   width: 72,
                   margin: const EdgeInsets.only(right: 10),
                   decoration: BoxDecoration(
-                    color:
-                        isSelected ? _R.cyan.withValues(alpha: 0.12) : _R.card,
+                    color: isSelected
+                        ? _R.cyan.withValues(alpha: 0.1)
+                        : _R.card(context),
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: isSelected ? _R.cyan : Colors.transparent,
-                      width: 2,
+                      color: isSelected ? _R.cyan : _R.border(context),
+                      width: isSelected ? 2 : 1,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -557,9 +612,10 @@ class _RoomLobbyState extends State<_RoomLobby>
                         p.name,
                         style: TextStyle(
                           fontSize: 10,
-                          fontWeight:
-                              isSelected ? FontWeight.w800 : FontWeight.w600,
-                          color: isSelected ? _R.cyan : _R.textSec,
+                          fontWeight: isSelected
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                          color: isSelected ? _R.cyan : _R.textSec(context),
                         ),
                       ),
                     ],
@@ -573,21 +629,22 @@ class _RoomLobbyState extends State<_RoomLobby>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: _R.card,
+            color: _R.card(context),
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _R.border(context)),
           ),
           child: Row(
             children: [
-              const Icon(Icons.format_quote_rounded,
-                  color: _R.textSec, size: 18),
+              Icon(Icons.format_quote_rounded,
+                  color: _R.textSec(context), size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   _plants[_selectedPlant].quote,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
-                    color: _R.textSec,
+                    color: _R.textSec(context),
                     height: 1.4,
                   ),
                 ),
@@ -606,17 +663,18 @@ class _RoomLobbyState extends State<_RoomLobby>
       children: [
         Row(
           children: [
-            const Text(
+            Text(
               'Focus Duration',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
-                color: _R.white,
+                color: _R.textPrimary(context),
               ),
             ),
             const Spacer(),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: _R.cyan.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
@@ -642,13 +700,15 @@ class _RoomLobbyState extends State<_RoomLobby>
               onTap: () => setState(() => _selectedMinutes = m),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 18, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? _R.cyan.withValues(alpha: 0.15) : _R.card,
+                  color: isSelected
+                      ? _R.cyan.withValues(alpha: 0.12)
+                      : _R.card(context),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isSelected ? _R.cyan : _R.cardLight,
+                    color: isSelected ? _R.cyan : _R.border(context),
                     width: 1.5,
                   ),
                 ),
@@ -656,8 +716,9 @@ class _RoomLobbyState extends State<_RoomLobby>
                   '$m min',
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                    color: isSelected ? _R.cyan : _R.textSec,
+                    fontWeight:
+                    isSelected ? FontWeight.w800 : FontWeight.w600,
+                    color: isSelected ? _R.cyan : _R.textSec(context),
                   ),
                 ),
               ),
@@ -721,12 +782,12 @@ class _RoomLobbyState extends State<_RoomLobby>
           children: [
             const Icon(Icons.military_tech_rounded, color: _R.gold, size: 22),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'Daily Milestones',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
-                color: _R.white,
+                color: _R.textPrimary(context),
               ),
             ),
             const Spacer(),
@@ -754,12 +815,23 @@ class _RoomLobbyState extends State<_RoomLobby>
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: done ? m.color.withValues(alpha: 0.06) : _R.card,
+              color: done
+                  ? m.color.withValues(alpha: 0.06)
+                  : _R.card(context),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: done ? m.color.withValues(alpha: 0.2) : _R.cardLight,
+                color: done
+                    ? m.color.withValues(alpha: 0.2)
+                    : _R.border(context),
                 width: 1,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                )
+              ],
             ),
             child: Row(
               children: [
@@ -785,8 +857,8 @@ class _RoomLobbyState extends State<_RoomLobby>
                         children: [
                           Text(
                             m.label,
-                            style: const TextStyle(
-                              color: _R.white,
+                            style: TextStyle(
+                              color: _R.textPrimary(context),
                               fontWeight: FontWeight.w700,
                               fontSize: 13,
                             ),
@@ -795,7 +867,7 @@ class _RoomLobbyState extends State<_RoomLobby>
                           Text(
                             '${m.value} / ${m.target}',
                             style: TextStyle(
-                              color: done ? m.color : _R.textSec,
+                              color: done ? m.color : _R.textSec(context),
                               fontWeight: FontWeight.w800,
                               fontSize: 11,
                             ),
@@ -808,7 +880,7 @@ class _RoomLobbyState extends State<_RoomLobby>
                           Container(
                             height: 5,
                             decoration: BoxDecoration(
-                              color: _R.surface,
+                              color: _R.surface(context),
                               borderRadius: BorderRadius.circular(3),
                             ),
                           ),
@@ -829,16 +901,18 @@ class _RoomLobbyState extends State<_RoomLobby>
                 ),
                 const SizedBox(width: 10),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: done ? m.color.withValues(alpha: 0.15) : _R.surface,
+                    color: done
+                        ? m.color.withValues(alpha: 0.15)
+                        : _R.surface(context),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     done ? '✓' : m.reward,
                     style: TextStyle(
-                      color: done ? m.color : _R.textSec,
+                      color: done ? m.color : _R.textSec(context),
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                     ),
@@ -861,12 +935,16 @@ class _RoomLobbyState extends State<_RoomLobby>
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _R.card,
+        color: _R.card(context),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: _R.cardLight,
-          width: 1,
-        ),
+        border: Border.all(color: _R.border(context), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          )
+        ],
       ),
       child: Row(
         children: [
@@ -881,8 +959,9 @@ class _RoomLobbyState extends State<_RoomLobby>
                   child: CircularProgressIndicator(
                     value: pct / 100,
                     strokeWidth: 5,
-                    backgroundColor: _R.surface,
-                    valueColor: const AlwaysStoppedAnimation<Color>(_R.cyan),
+                    backgroundColor: _R.surface(context),
+                    valueColor:
+                    const AlwaysStoppedAnimation<Color>(_R.cyan),
                     strokeCap: StrokeCap.round,
                   ),
                 ),
@@ -904,21 +983,21 @@ class _RoomLobbyState extends State<_RoomLobby>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   "Today's Progress",
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: _R.white,
+                    color: _R.textPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${todayMin}min of ${targetMin}min target',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: _R.textSec,
+                    color: _R.textSec(context),
                   ),
                 ),
               ],
@@ -927,7 +1006,8 @@ class _RoomLobbyState extends State<_RoomLobby>
           _miniStat(Icons.local_fire_department_rounded,
               '${focus.pomodoroCount}', _R.red),
           const SizedBox(width: 12),
-          _miniStat(Icons.bolt_rounded, '${focus.pomodoroCount * 10}', _R.gold),
+          _miniStat(
+              Icons.bolt_rounded, '${focus.pomodoroCount * 10}', _R.gold),
         ],
       ),
     );
@@ -963,7 +1043,7 @@ class _RoomLobbyState extends State<_RoomLobby>
           ),
           boxShadow: [
             BoxShadow(
-              color: _R.cyan.withValues(alpha: 0.3),
+              color: _R.cyan.withValues(alpha: 0.35),
               blurRadius: 16,
               spreadRadius: 1,
               offset: const Offset(0, 6),
@@ -973,14 +1053,14 @@ class _RoomLobbyState extends State<_RoomLobby>
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.play_arrow_rounded, color: _R.bg, size: 26),
+            Icon(Icons.play_arrow_rounded, color: Colors.white, size: 26),
             SizedBox(width: 8),
             Text(
               'Start Focus Session',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w900,
-                color: _R.bg,
+                color: Colors.white,
                 letterSpacing: 0.5,
               ),
             ),
@@ -990,47 +1070,62 @@ class _RoomLobbyState extends State<_RoomLobby>
     );
   }
 
+  // ── Helper for bottom sheet backdrop ──
+  BoxDecoration _sheetDecor() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return BoxDecoration(
+      color: isDark ? const Color(0xFF141828) : Colors.white,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+    );
+  }
+
   // DIALOGS
   void _showMenuSheet() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: _R.card,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: _R.textSec.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+      builder: (ctx) => Container(
+        decoration: _sheetDecor(),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: _R.textSec(context).withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              _menuItem(Icons.groups_rounded, 'Create Community', _R.purple,
-                  () {
-                Navigator.pop(ctx);
-                _showCreateCommunityDialog();
-              }),
-              _menuItem(Icons.group_add_rounded, 'Join Community', _R.green,
-                  () {
-                Navigator.pop(ctx);
-                _showJoinCommunityDialog();
-              }),
-              _menuItem(Icons.leaderboard_rounded, 'Leaderboard', _R.gold, () {
-                Navigator.pop(ctx);
-                _showLeaderboard();
-              }),
-              _menuItem(Icons.settings_rounded, 'Settings', _R.textSec, () {
-                Navigator.pop(ctx);
-              }),
-            ],
+                const SizedBox(height: 20),
+                _menuItem(Icons.groups_rounded, 'Create Community', _R.purple,
+                        () {
+                      Navigator.pop(ctx);
+                      _showCreateCommunityDialog();
+                    }),
+                _menuItem(Icons.group_add_rounded, 'Join Community', _R.green,
+                        () {
+                      Navigator.pop(ctx);
+                      _showJoinCommunityDialog();
+                    }),
+                _menuItem(
+                    Icons.leaderboard_rounded, 'Leaderboard', _R.gold, () {
+                  Navigator.pop(ctx);
+                  _showLeaderboard();
+                }),
+                _menuItem(
+                    Icons.settings_rounded, 'Settings', _R.textSec(context),
+                        () {
+                      Navigator.pop(ctx);
+                    }),
+              ],
+            ),
           ),
         ),
       ),
@@ -1050,9 +1145,12 @@ class _RoomLobbyState extends State<_RoomLobby>
         child: Icon(icon, color: color, size: 22),
       ),
       title: Text(label,
-          style: const TextStyle(
-              fontWeight: FontWeight.w700, color: _R.white, fontSize: 15)),
-      trailing: const Icon(Icons.chevron_right_rounded, color: _R.textSec),
+          style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: _R.textPrimary(context),
+              fontSize: 15)),
+      trailing: Icon(Icons.chevron_right_rounded,
+          color: _R.textSec(context)),
       onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     );
@@ -1061,69 +1159,72 @@ class _RoomLobbyState extends State<_RoomLobby>
   void _showRoomOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: _R.card,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: _R.textSec.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Team Room',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: _R.white,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Create a room or join one with a code',
-                style: TextStyle(fontSize: 13, color: _R.textSec),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: _optionCard(
-                      Icons.add_circle_rounded,
-                      'Create',
-                      'Room',
-                      _R.cyan,
-                      () {
-                        Navigator.pop(ctx);
-                        _showCreateRoomDialog();
-                      },
-                    ),
+      builder: (ctx) => Container(
+        decoration: _sheetDecor(),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: _R.textSec(context).withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _optionCard(
-                      Icons.login_rounded,
-                      'Join',
-                      'Room',
-                      _R.purple,
-                      () {
-                        Navigator.pop(ctx);
-                        _showJoinRoomDialog();
-                      },
-                    ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Team Room',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: _R.textPrimary(context),
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Create a room or join one with a code',
+                  style: TextStyle(fontSize: 13, color: _R.textSec(context)),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _optionCard(
+                        Icons.add_circle_rounded,
+                        'Create',
+                        'Room',
+                        _R.cyan,
+                            () {
+                          Navigator.pop(ctx);
+                          _showCreateRoomDialog();
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _optionCard(
+                        Icons.login_rounded,
+                        'Join',
+                        'Room',
+                        _R.purple,
+                            () {
+                          Navigator.pop(ctx);
+                          _showJoinRoomDialog();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1139,22 +1240,59 @@ class _RoomLobbyState extends State<_RoomLobby>
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+          border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
         ),
         child: Column(
           children: [
             Icon(icon, color: color, size: 32),
             const SizedBox(height: 10),
             Text(title,
-                style: const TextStyle(
-                    color: _R.white,
+                style: TextStyle(
+                    color: _R.textPrimary(context),
                     fontWeight: FontWeight.w800,
                     fontSize: 16)),
             const SizedBox(height: 2),
-            Text(sub, style: const TextStyle(color: _R.textSec, fontSize: 12)),
+            Text(sub,
+                style:
+                TextStyle(color: _R.textSec(context), fontSize: 12)),
           ],
         ),
       ),
+    );
+  }
+
+  InputDecoration _inputDecor(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(color: _R.textSec(context).withValues(alpha: 0.7)),
+      filled: true,
+      fillColor: _R.surface(context),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+    );
+  }
+
+  TextStyle get _inputTextStyle =>
+      TextStyle(color: _R.textPrimary(context));
+
+  AlertDialog _styledDialog({
+    required String title,
+    required Widget content,
+    required List<Widget> actions,
+  }) {
+    return AlertDialog(
+      backgroundColor: _R.card(context),
+      shape:
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      title: Text(
+        title,
+        style: TextStyle(
+            fontWeight: FontWeight.w900, color: _R.textPrimary(context)),
+      ),
+      content: content,
+      actions: actions,
     );
   }
 
@@ -1163,26 +1301,30 @@ class _RoomLobbyState extends State<_RoomLobby>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: _R.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: _R.card(context),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Row(
           children: [
             Text(plant.emoji, style: const TextStyle(fontSize: 28)),
             const SizedBox(width: 10),
-            const Text(
+            Text(
               'Start Focus',
-              style: TextStyle(fontWeight: FontWeight.w900, color: _R.white),
+              style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: _R.textPrimary(context)),
             ),
           ],
         ),
         content: Text(
           "Plant your ${plant.name} and focus for $_selectedMinutes minutes.\nDon't leave or your plant will wither!",
-          style: const TextStyle(color: _R.textSec, height: 1.5),
+          style: TextStyle(color: _R.textSec(context), height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: _R.textSec)),
+            child: Text('Cancel',
+                style: TextStyle(color: _R.textSec(context))),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1202,7 +1344,7 @@ class _RoomLobbyState extends State<_RoomLobby>
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _R.cyan,
-              foregroundColor: _R.bg,
+              foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
             ),
@@ -1219,17 +1361,20 @@ class _RoomLobbyState extends State<_RoomLobby>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: _R.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: _R.card(context),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Row(
           children: [
             Text(plant.emoji, style: const TextStyle(fontSize: 28)),
             const SizedBox(width: 10),
-            const Expanded(
+            Expanded(
               child: Text(
                 'Solo Focus Room',
                 style: TextStyle(
-                    fontWeight: FontWeight.w900, color: _R.white, fontSize: 18),
+                    fontWeight: FontWeight.w900,
+                    color: _R.textPrimary(context),
+                    fontSize: 18),
               ),
             ),
           ],
@@ -1240,7 +1385,8 @@ class _RoomLobbyState extends State<_RoomLobby>
           children: [
             Text(
               'Enter your solo study room with ${plant.name}.\n$_selectedMinutes minute session — just you and your focus.',
-              style: const TextStyle(color: _R.textSec, height: 1.5),
+              style:
+              TextStyle(color: _R.textSec(context), height: 1.5),
             ),
             const SizedBox(height: 16),
             Container(
@@ -1271,7 +1417,8 @@ class _RoomLobbyState extends State<_RoomLobby>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: _R.textSec)),
+            child: Text('Cancel',
+                style: TextStyle(color: _R.textSec(context))),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -1289,13 +1436,13 @@ class _RoomLobbyState extends State<_RoomLobby>
                 return;
               }
               await context.read<StudyRoomProvider>().createSoloRoom(
-                    subject: plant.name,
-                    targetMinutes: _selectedMinutes,
-                  );
+                subject: plant.name,
+                targetMinutes: _selectedMinutes,
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _R.cyan,
-              foregroundColor: _R.bg,
+              foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
             ),
@@ -1313,50 +1460,36 @@ class _RoomLobbyState extends State<_RoomLobby>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: _R.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
+        backgroundColor: _R.card(context),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
           'Create Study Room',
-          style: TextStyle(fontWeight: FontWeight.w900, color: _R.white),
+          style: TextStyle(
+              fontWeight: FontWeight.w900,
+              color: _R.textPrimary(context)),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameCtrl,
-              style: const TextStyle(color: _R.white),
-              decoration: InputDecoration(
-                hintText: 'Room name',
-                hintStyle: TextStyle(color: _R.textSec.withValues(alpha: 0.6)),
-                filled: true,
-                fillColor: _R.surface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
-                ),
-              ),
+              style: _inputTextStyle,
+              decoration: _inputDecor('Room name'),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: subjectCtrl,
-              style: const TextStyle(color: _R.white),
-              decoration: InputDecoration(
-                hintText: 'Subject (optional)',
-                hintStyle: TextStyle(color: _R.textSec.withValues(alpha: 0.6)),
-                filled: true,
-                fillColor: _R.surface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
-                ),
-              ),
+              style: _inputTextStyle,
+              decoration: _inputDecor('Subject (optional)'),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: _R.textSec)),
+            child: Text('Cancel',
+                style: TextStyle(color: _R.textSec(context))),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -1367,11 +1500,12 @@ class _RoomLobbyState extends State<_RoomLobby>
               final subject = subjectCtrl.text.trim().isEmpty
                   ? null
                   : subjectCtrl.text.trim();
-              final room = await context.read<StudyRoomProvider>().createRoom(
-                    name: roomName,
-                    subject: subject,
-                    targetMinutes: _selectedMinutes,
-                  );
+              final room =
+              await context.read<StudyRoomProvider>().createRoom(
+                name: roomName,
+                subject: subject,
+                targetMinutes: _selectedMinutes,
+              );
               if (!mounted || !ctx.mounted) return;
               Navigator.pop(ctx);
               messenger.showSnackBar(
@@ -1383,7 +1517,7 @@ class _RoomLobbyState extends State<_RoomLobby>
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _R.cyan,
-              foregroundColor: _R.bg,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Create',
                 style: TextStyle(fontWeight: FontWeight.w800)),
@@ -1398,11 +1532,14 @@ class _RoomLobbyState extends State<_RoomLobby>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: _R.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
+        backgroundColor: _R.card(context),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
           'Join Study Room',
-          style: TextStyle(fontWeight: FontWeight.w900, color: _R.white),
+          style: TextStyle(
+              fontWeight: FontWeight.w900,
+              color: _R.textPrimary(context)),
         ),
         content: TextField(
           controller: codeCtrl,
@@ -1418,9 +1555,10 @@ class _RoomLobbyState extends State<_RoomLobby>
           decoration: InputDecoration(
             counterText: '',
             hintText: 'CODE',
-            hintStyle: TextStyle(color: _R.textSec.withValues(alpha: 0.45)),
+            hintStyle: TextStyle(
+                color: _R.textSec(context).withValues(alpha: 0.45)),
             filled: true,
-            fillColor: _R.surface,
+            fillColor: _R.surface(context),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide.none,
@@ -1430,7 +1568,8 @@ class _RoomLobbyState extends State<_RoomLobby>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: _R.textSec)),
+            child: Text('Cancel',
+                style: TextStyle(color: _R.textSec(context))),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -1442,14 +1581,15 @@ class _RoomLobbyState extends State<_RoomLobby>
               Navigator.pop(ctx);
               messenger.showSnackBar(
                 SnackBar(
-                  content: Text(ok ? 'Joined room!' : 'Room code not found.'),
+                  content:
+                  Text(ok ? 'Joined room!' : 'Room code not found.'),
                   backgroundColor: ok ? _R.green : _R.red,
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _R.cyan,
-              foregroundColor: _R.bg,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Join',
                 style: TextStyle(fontWeight: FontWeight.w800)),
@@ -1464,30 +1604,25 @@ class _RoomLobbyState extends State<_RoomLobby>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: _R.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
+        backgroundColor: _R.card(context),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
           'Create Community',
-          style: TextStyle(fontWeight: FontWeight.w900, color: _R.white),
+          style: TextStyle(
+              fontWeight: FontWeight.w900,
+              color: _R.textPrimary(context)),
         ),
         content: TextField(
           controller: nameCtrl,
-          style: const TextStyle(color: _R.white),
-          decoration: InputDecoration(
-            hintText: 'e.g. CSE Batch 2026',
-            hintStyle: TextStyle(color: _R.textSec.withValues(alpha: 0.6)),
-            filled: true,
-            fillColor: _R.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
-            ),
-          ),
+          style: _inputTextStyle,
+          decoration: _inputDecor('e.g. CSE Batch 2026'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: _R.textSec)),
+            child: Text('Cancel',
+                style: TextStyle(color: _R.textSec(context))),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -1502,14 +1637,15 @@ class _RoomLobbyState extends State<_RoomLobby>
               Navigator.pop(ctx);
               messenger.showSnackBar(
                 SnackBar(
-                  content: Text('Community created. Code: ${community.code}'),
+                  content: Text(
+                      'Community created. Code: ${community.code}'),
                   backgroundColor: _R.green,
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _R.purple,
-              foregroundColor: _R.white,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Create'),
           ),
@@ -1523,11 +1659,14 @@ class _RoomLobbyState extends State<_RoomLobby>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: _R.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
+        backgroundColor: _R.card(context),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
           'Join Community',
-          style: TextStyle(fontWeight: FontWeight.w900, color: _R.white),
+          style: TextStyle(
+              fontWeight: FontWeight.w900,
+              color: _R.textPrimary(context)),
         ),
         content: TextField(
           controller: codeCtrl,
@@ -1543,9 +1682,10 @@ class _RoomLobbyState extends State<_RoomLobby>
           decoration: InputDecoration(
             counterText: '',
             hintText: 'FRIEND1',
-            hintStyle: TextStyle(color: _R.textSec.withValues(alpha: 0.45)),
+            hintStyle: TextStyle(
+                color: _R.textSec(context).withValues(alpha: 0.45)),
             filled: true,
-            fillColor: _R.surface,
+            fillColor: _R.surface(context),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide.none,
@@ -1555,7 +1695,8 @@ class _RoomLobbyState extends State<_RoomLobby>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: _R.textSec)),
+            child: Text('Cancel',
+                style: TextStyle(color: _R.textSec(context))),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -1576,7 +1717,7 @@ class _RoomLobbyState extends State<_RoomLobby>
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _R.cyan,
-              foregroundColor: _R.bg,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Join'),
           ),
@@ -1586,154 +1727,159 @@ class _RoomLobbyState extends State<_RoomLobby>
   }
 
   void _showLeaderboard() {
-    final community = context.read<StudyRoomProvider>().joinedCommunity;
+    final community =
+        context.read<StudyRoomProvider>().joinedCommunity;
     final members = community?.members ?? [];
     final leaders = members
         .asMap()
         .entries
-        .map((e) => _LeaderEntry(e.value.name, e.value.studyMinutes, e.key + 1))
+        .map((e) =>
+        _LeaderEntry(e.value.name, e.value.studyMinutes, e.key + 1))
         .toList()
       ..sort((a, b) => b.minutes.compareTo(a.minutes));
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: _R.card,
+      backgroundColor: Colors.transparent,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (ctx) => SafeArea(
-        child: Container(
-          height: MediaQuery.of(ctx).size.height * 0.65,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: _R.textSec.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+      builder: (ctx) => Container(
+        decoration: _sheetDecor(),
+        height: MediaQuery.of(ctx).size.height * 0.65,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: _R.textSec(context).withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Icon(Icons.emoji_events_rounded,
+                    color: _R.gold, size: 28),
+                const SizedBox(width: 10),
+                Text(
+                  'Leaderboard',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: _R.textPrimary(context),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.emoji_events_rounded,
-                      color: _R.gold, size: 28),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Leaderboard',
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _R.cyan.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'This Week',
                     style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: _R.white,
+                      color: _R.cyan,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
                     ),
                   ),
-                  const Spacer(),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView.builder(
+                itemCount: leaders.length,
+                itemBuilder: (ctx2, i) {
+                  final l = leaders[i];
+                  final isYou = l.name == 'You';
+                  final rankColor = i == 0
+                      ? _R.gold
+                      : i == 1
+                      ? const Color(0xFFC0C0C0)
+                      : i == 2
+                      ? const Color(0xFFCD7F32)
+                      : _R.textSec(context);
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: _R.cyan.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
+                      color: isYou
+                          ? _R.cyan.withValues(alpha: 0.08)
+                          : _R.surface(context),
+                      borderRadius: BorderRadius.circular(16),
+                      border: isYou
+                          ? Border.all(
+                          color: _R.cyan.withValues(alpha: 0.3),
+                          width: 1.5)
+                          : null,
                     ),
-                    child: const Text(
-                      'This Week',
-                      style: TextStyle(
-                        color: _R.cyan,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: leaders.length,
-                  itemBuilder: (ctx2, i) {
-                    final l = leaders[i];
-                    final isYou = l.name == 'You';
-                    final rankColor = i == 0
-                        ? _R.gold
-                        : i == 1
-                            ? const Color(0xFFC0C0C0)
-                            : i == 2
-                                ? const Color(0xFFCD7F32)
-                                : _R.textSec;
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: isYou
-                            ? _R.cyan.withValues(alpha: 0.08)
-                            : _R.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: isYou
-                            ? Border.all(
-                                color: _R.cyan.withValues(alpha: 0.3),
-                                width: 1.5)
-                            : null,
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: rankColor.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Center(
-                              child: i < 3
-                                  ? Icon(Icons.emoji_events_rounded,
-                                      color: rankColor, size: 20)
-                                  : Text(
-                                      '#${i + 1}',
-                                      style: const TextStyle(
-                                        color: _R.textSec,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                            ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: rankColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Text(
-                              l.name,
+                          child: Center(
+                            child: i < 3
+                                ? Icon(Icons.emoji_events_rounded,
+                                color: rankColor, size: 20)
+                                : Text(
+                              '#${i + 1}',
                               style: TextStyle(
-                                color: isYou ? _R.cyan : _R.white,
+                                color: _R.textSec(context),
                                 fontWeight: FontWeight.w800,
-                                fontSize: 15,
+                                fontSize: 13,
                               ),
                             ),
                           ),
-                          Text(
-                            '${l.minutes} min',
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            l.name,
                             style: TextStyle(
-                              color: isYou ? _R.cyan : _R.textSec,
+                              color: isYou
+                                  ? _R.cyan
+                                  : _R.textPrimary(context),
                               fontWeight: FontWeight.w800,
-                              fontSize: 14,
+                              fontSize: 15,
                             ),
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                        ),
+                        Text(
+                          '${l.minutes} min',
+                          style: TextStyle(
+                            color: isYou ? _R.cyan : _R.textSec(context),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
+// ══════════════════════════════════════════
 // ACTIVE ROOM VIEW
+// ══════════════════════════════════════════
 class _ActiveRoomView extends StatefulWidget {
   final StudyRoomProvider room;
   const _ActiveRoomView({required this.room});
@@ -1745,6 +1891,9 @@ class _ActiveRoomView extends StatefulWidget {
 class _ActiveRoomViewState extends State<_ActiveRoomView> {
   final _chatController = TextEditingController();
   final _scrollController = ScrollController();
+
+  bool get _isDark =>
+      Theme.of(context).brightness == Brightness.dark;
 
   @override
   void dispose() {
@@ -1771,7 +1920,7 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
     _scrollToBottom();
 
     return Scaffold(
-      backgroundColor: _R.bg,
+      backgroundColor: _R.bg(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -1799,11 +1948,12 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: _R.card,
+                color: _R.card(context),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _R.border(context)),
               ),
-              child: const Icon(Icons.arrow_back_rounded,
-                  color: _R.white, size: 20),
+              child: Icon(Icons.arrow_back_rounded,
+                  color: _R.textPrimary(context), size: 20),
             ),
           ),
           const SizedBox(width: 12),
@@ -1813,10 +1963,10 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
               children: [
                 Text(
                   room.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 17,
-                    color: _R.white,
+                    color: _R.textPrimary(context),
                   ),
                 ),
                 Row(
@@ -1824,7 +1974,7 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                     Container(
                       width: 6,
                       height: 6,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: _R.green,
                         shape: BoxShape.circle,
                       ),
@@ -1832,7 +1982,8 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                     const SizedBox(width: 6),
                     Text(
                       '${room.members.length} members',
-                      style: const TextStyle(fontSize: 12, color: _R.textSec),
+                      style: TextStyle(
+                          fontSize: 12, color: _R.textSec(context)),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -1850,9 +2001,9 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                           '• ${widget.room.joinedCommunity!.name}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: _R.textSec,
+                            color: _R.textSec(context),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -1877,10 +2028,12 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: _R.card,
+                color: _R.card(context),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _R.border(context)),
               ),
-              child: const Icon(Icons.copy_rounded, color: _R.cyan, size: 18),
+              child: const Icon(Icons.copy_rounded,
+                  color: _R.cyan, size: 18),
             ),
           ),
           const SizedBox(width: 8),
@@ -1894,11 +2047,12 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: _R.card,
+                color: _R.card(context),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _R.border(context)),
               ),
-              child:
-                  const Icon(Icons.share_rounded, color: _R.purple, size: 18),
+              child: const Icon(Icons.share_rounded,
+                  color: _R.purple, size: 18),
             ),
           ),
         ],
@@ -1916,7 +2070,8 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
         itemBuilder: (ctx, i) {
           final member = room.members[i];
           final isMe = member.id == widget.room.myUserId;
-          final statusColor = member.isStudying ? _R.green : _R.textSec;
+          final statusColor =
+          member.isStudying ? _R.green : _R.textSec(context);
 
           return Stack(
             children: [
@@ -1925,12 +2080,16 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                 margin: const EdgeInsets.only(right: 10),
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isMe ? _R.cyan.withValues(alpha: 0.06) : _R.card,
+                  color: isMe
+                      ? _R.cyan.withValues(alpha: 0.06)
+                      : _R.card(context),
                   borderRadius: BorderRadius.circular(18),
-                  border: isMe
-                      ? Border.all(
-                          color: _R.cyan.withValues(alpha: 0.2), width: 1)
-                      : null,
+                  border: Border.all(
+                    color: isMe
+                        ? _R.cyan.withValues(alpha: 0.25)
+                        : _R.border(context),
+                    width: 1,
+                  ),
                 ),
                 child: Column(
                   children: [
@@ -1943,7 +2102,7 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                             shape: BoxShape.circle,
                             color: member.isStudying
                                 ? _R.green.withValues(alpha: 0.12)
-                                : _R.surface,
+                                : _R.surface(context),
                             border: Border.all(
                               color: statusColor,
                               width: 2,
@@ -1952,7 +2111,9 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                           child: Center(
                             child: Text(
                               member.name.isNotEmpty
-                                  ? member.name.substring(0, 1).toUpperCase()
+                                  ? member.name
+                                  .substring(0, 1)
+                                  .toUpperCase()
                                   : '?',
                               style: TextStyle(
                                 fontSize: 18,
@@ -1969,9 +2130,12 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                             width: 12,
                             height: 12,
                             decoration: BoxDecoration(
-                              color: member.isOnline ? _R.green : _R.textSec,
+                              color: member.isOnline
+                                  ? _R.green
+                                  : _R.textSec(context),
                               shape: BoxShape.circle,
-                              border: Border.all(color: _R.bg, width: 2),
+                              border:
+                              Border.all(color: _R.bg(context), width: 2),
                             ),
                           ),
                         ),
@@ -1985,13 +2149,13 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: isMe ? _R.cyan : _R.white,
+                        color: isMe ? _R.cyan : _R.textPrimary(context),
                       ),
                     ),
                     if (member.isStudying)
                       Text(
                         '${member.studyMinutes}m',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 9,
                           color: _R.green,
                           fontWeight: FontWeight.w700,
@@ -2009,7 +2173,7 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: _R.purple.withValues(alpha: 0.22),
+                        color: _R.purple.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -2032,14 +2196,21 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _R.card,
+        color: _R.card(context),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: widget.room.isStudying
-              ? _R.cyan.withValues(alpha: 0.3)
-              : _R.cardLight,
+              ? _R.cyan.withValues(alpha: 0.35)
+              : _R.border(context),
           width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          )
+        ],
       ),
       child: Row(
         children: [
@@ -2053,7 +2224,9 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                     height: 8,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: widget.room.isStudying ? _R.green : _R.textSec,
+                      color: widget.room.isStudying
+                          ? _R.green
+                          : _R.textSec(context),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -2062,7 +2235,9 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: widget.room.isStudying ? _R.green : _R.textSec,
+                      color: widget.room.isStudying
+                          ? _R.green
+                          : _R.textSec(context),
                     ),
                   ),
                 ],
@@ -2075,7 +2250,9 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                   fontWeight: FontWeight.w200,
                   letterSpacing: 3,
                   fontFeatures: const [FontFeature.tabularFigures()],
-                  color: widget.room.isStudying ? _R.cyan : _R.white,
+                  color: widget.room.isStudying
+                      ? _R.cyan
+                      : _R.textPrimary(context),
                 ),
               ),
             ],
@@ -2086,12 +2263,14 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
               if (widget.room.isStudying) {
                 widget.room.stopStudyTimer();
                 try {
-                  await FocusProvider.platform.invokeMethod('stopFocusMode');
+                  await FocusProvider.platform
+                      .invokeMethod('stopFocusMode');
                 } catch (e) {
                   debugPrint('Failed to stop focus mode: $e');
                 }
               } else {
-                if (focus.blockAllApps || focus.blockedApps.isNotEmpty) {
+                if (focus.blockAllApps ||
+                    focus.blockedApps.isNotEmpty) {
                   await focus.checkPermissions();
                   if (!mounted) return;
                   if (!focus.hasUsagePermission ||
@@ -2100,8 +2279,6 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                     return;
                   }
                 }
-
-                // Check for session conflicts
                 if (FocusProvider.isAnySessionActive) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -2114,9 +2291,7 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                   }
                   return;
                 }
-
                 widget.room.startStudyTimer();
-
                 List<String> activeBlockedApps;
                 if (focus.blockAllApps) {
                   activeBlockedApps = focus.installedApps
@@ -2128,9 +2303,9 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                       .map((app) => app.packageName)
                       .toList();
                 }
-
                 try {
-                  await FocusProvider.platform.invokeMethod('startFocusMode', {
+                  await FocusProvider.platform
+                      .invokeMethod('startFocusMode', {
                     'blockedApps': activeBlockedApps,
                     'durationMinutes': 1440,
                   });
@@ -2151,7 +2326,8 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (widget.room.isStudying ? _R.red : _R.cyan)
+                    color:
+                    (widget.room.isStudying ? _R.red : _R.cyan)
                         .withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
@@ -2176,18 +2352,22 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: _R.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Permissions Required',
-            style: TextStyle(color: _R.white, fontWeight: FontWeight.w900)),
-        content: const Text(
+        backgroundColor: _R.card(context),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24)),
+        title: Text('Permissions Required',
+            style: TextStyle(
+                color: _R.textPrimary(context),
+                fontWeight: FontWeight.w900)),
+        content: Text(
           'To block apps while studying, Monojog needs Usage Access and Display Over Other Apps permissions.',
-          style: TextStyle(color: _R.textSec, height: 1.5),
+          style: TextStyle(color: _R.textSec(context), height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: _R.textSec)),
+            child: Text('Cancel',
+                style: TextStyle(color: _R.textSec(context))),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -2201,7 +2381,7 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _R.cyan,
-              foregroundColor: _R.bg,
+              foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
             ),
@@ -2221,12 +2401,12 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.chat_bubble_outline_rounded,
-                color: _R.cyan.withValues(alpha: 0.2), size: 48),
+                color: _R.cyan.withValues(alpha: 0.25), size: 48),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Chat with your study buddies!',
               style: TextStyle(
-                color: _R.textSec,
+                color: _R.textSec(context),
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
@@ -2235,7 +2415,7 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
             Text(
               'Motivate each other to stay focused',
               style: TextStyle(
-                color: _R.textSec.withValues(alpha: 0.6),
+                color: _R.textSec(context).withValues(alpha: 0.6),
                 fontSize: 12,
               ),
             ),
@@ -2261,14 +2441,14 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
   }
 
   Widget _buildSystemMessage(RoomMessage msg) {
-    Color bgColor = _R.surface;
-    Color textColor = _R.textSec;
+    Color bgColor = _R.surface(context);
+    Color textColor = _R.textSec(context);
 
     if (msg.type == MessageType.studyStart) {
-      bgColor = _R.green.withValues(alpha: 0.08);
+      bgColor = _R.green.withValues(alpha: 0.1);
       textColor = _R.green;
     } else if (msg.type == MessageType.studyEnd) {
-      bgColor = _R.cyan.withValues(alpha: 0.08);
+      bgColor = _R.cyan.withValues(alpha: 0.1);
       textColor = _R.cyan;
     }
 
@@ -2276,7 +2456,8 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(12),
@@ -2304,8 +2485,9 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
           maxWidth: MediaQuery.of(context).size.width * 0.72,
         ),
         child: Column(
-          crossAxisAlignment:
-              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: isMe
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
             if (!isMe)
               Padding(
@@ -2320,31 +2502,38 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                 ),
               ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: isMe ? _R.cyan : _R.card,
+                color: isMe ? _R.cyan : _R.card(context),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
                   bottomLeft: Radius.circular(isMe ? 16 : 4),
                   bottomRight: Radius.circular(isMe ? 4 : 16),
                 ),
-                border: isMe ? null : Border.all(color: _R.cardLight, width: 1),
+                border: isMe
+                    ? null
+                    : Border.all(color: _R.border(context), width: 1),
               ),
               child: Text(
                 msg.text,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: isMe ? _R.bg : _R.white,
+                  color: isMe
+                      ? Colors.white
+                      : _R.textPrimary(context),
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(top: 2, left: 12, right: 12),
+              padding: const EdgeInsets.only(
+                  top: 2, left: 12, right: 12),
               child: Text(
                 '${msg.timestamp.hour.toString().padLeft(2, '0')}:${msg.timestamp.minute.toString().padLeft(2, '0')}',
-                style: const TextStyle(fontSize: 10, color: _R.textSec),
+                style: TextStyle(
+                    fontSize: 10, color: _R.textSec(context)),
               ),
             ),
           ],
@@ -2357,10 +2546,10 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
     return Container(
       padding: EdgeInsets.fromLTRB(
           16, 8, 8, MediaQuery.of(context).padding.bottom + 8),
-      decoration: const BoxDecoration(
-        color: _R.card,
+      decoration: BoxDecoration(
+        color: _R.card(context),
         border: Border(
-          top: BorderSide(color: _R.cardLight, width: 1),
+          top: BorderSide(color: _R.border(context), width: 1),
         ),
       ),
       child: Row(
@@ -2370,18 +2559,18 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
               controller: _chatController,
               maxLines: null,
               textCapitalization: TextCapitalization.sentences,
-              style: const TextStyle(color: _R.white),
+              style: TextStyle(color: _R.textPrimary(context)),
               decoration: InputDecoration(
                 hintText: 'Type a message...',
-                hintStyle: const TextStyle(color: _R.textSec),
+                hintStyle: TextStyle(color: _R.textSec(context)),
                 filled: true,
-                fillColor: _R.surface,
+                fillColor: _R.surface(context),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(22),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 18, vertical: 12),
               ),
             ),
           ),
@@ -2409,8 +2598,8 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
                   ),
                 ],
               ),
-              child:
-                  const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              child: const Icon(Icons.send_rounded,
+                  color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -2422,26 +2611,31 @@ class _ActiveRoomViewState extends State<_ActiveRoomView> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: _R.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Leave Room?',
-            style: TextStyle(fontWeight: FontWeight.w900, color: _R.white)),
-        content: const Text(
+        backgroundColor: _R.card(context),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24)),
+        title: Text('Leave Room?',
+            style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: _R.textPrimary(context))),
+        content: Text(
           'Are you sure you want to leave this study room?',
-          style: TextStyle(color: _R.textSec),
+          style: TextStyle(color: _R.textSec(context)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Stay',
-                style: TextStyle(color: _R.cyan, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    color: _R.cyan, fontWeight: FontWeight.bold)),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               widget.room.leaveRoom();
             },
-            child: const Text('Leave', style: TextStyle(color: _R.red)),
+            child: const Text('Leave',
+                style: TextStyle(color: _R.red)),
           ),
         ],
       ),

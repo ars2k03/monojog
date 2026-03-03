@@ -37,17 +37,58 @@ class _UnifiedItem {
   });
 }
 
+// ── Adaptive color palette ──
 class _MC {
-  static const bg = Color(0xFF0A0A0F);
-  static const card = Color(0xFF14141C);
-  static const cardLight = Color(0xFF1C1C28);
+  // Dark
+  static const _bgDark = Color(0xFF0A0A0F);
+  static const _cardDark = Color(0xFF14141C);
+  static const _cardLightDark = Color(0xFF1C1C28);
+
+  // Light
+  static const _bgLight = Color(0xFFF4F6FF);
+  static const _cardLight = Color(0xFFFFFFFF);
+  static const _cardLightLight = Color(0xFFECEEFA);
+
+  // Accent — same both modes
   static const purple = Color(0xFF7C4DFF);
-  static const cyan = Color(0xFF00E5FF);
-  static const mint = Color(0xFF00E5A0);
-  static const gold = Color(0xFFFFD700);
-  static const red = Color(0xFFFF4D6D);
+  static const cyan = Color(0xFF00ACC1);
+  static const mint = Color(0xFF00BFA5);
+  static const gold = Color(0xFFFFB300);
+  static const red = Color(0xFFEF5350);
   static const orange = Color(0xFFFF9F43);
-  static const textSec = Color(0xFF8B8FA3);
+
+  static Color bg(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? _bgDark : _bgLight;
+
+  static Color card(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? _cardDark
+          : _cardLight;
+
+  static Color cardLight_(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? _cardLightDark
+          : _cardLightLight;
+
+  static Color surface(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1C1C28)
+          : const Color(0xFFE8EAF6);
+
+  static Color textPrimary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? Colors.white
+          : const Color(0xFF1A1F33);
+
+  static Color textSec(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF8B8FA3)
+          : const Color(0xFF757B9A);
+
+  static Color border(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1C1C28)
+          : const Color(0xFFDDE0F0);
 }
 
 Color _hex(String hex) {
@@ -66,7 +107,7 @@ class _MyDayScreenState extends State<MyDayScreen>
   late TabController _tabCtrl;
   final _addCtrl = TextEditingController();
   bool _showAddField = false;
-  int _filterMode = 0; // 0=all, 1=todo only, 2=habits only
+  int _filterMode = 0;
 
   @override
   void initState() {
@@ -86,7 +127,6 @@ class _MyDayScreenState extends State<MyDayScreen>
     final items = <_UnifiedItem>[];
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-    // Add today's tasks
     if (_filterMode != 2) {
       for (final t in tasks.tasks) {
         final taskDate = DateFormat('yyyy-MM-dd').format(t.dueDate);
@@ -98,8 +138,8 @@ class _MyDayScreenState extends State<MyDayScreen>
             color: t.priority == TaskPriority.high
                 ? _MC.red
                 : t.priority == TaskPriority.medium
-                    ? _MC.orange
-                    : _MC.cyan,
+                ? _MC.orange
+                : _MC.cyan,
             type: _ItemType.task,
             isDone: t.status == TaskStatus.done,
             priority: t.priority,
@@ -109,7 +149,6 @@ class _MyDayScreenState extends State<MyDayScreen>
       }
     }
 
-    // Add today's scheduled habits as items
     if (_filterMode != 1) {
       final weekday = DateTime.now().weekday;
       for (final h in habits.habits) {
@@ -123,13 +162,13 @@ class _MyDayScreenState extends State<MyDayScreen>
           type: _ItemType.habit,
           isDone: done,
           streak: h.currentStreak,
-          subtitle:
-              h.currentStreak > 0 ? '${h.currentStreak} day streak 🔥' : null,
+          subtitle: h.currentStreak > 0
+              ? '${h.currentStreak} day streak 🔥'
+              : null,
         ));
       }
     }
 
-    // Sort: undone first, then by type (habits then tasks), then alphabetical
     items.sort((a, b) {
       if (a.isDone != b.isDone) return a.isDone ? 1 : -1;
       if (a.type != b.type) return a.type == _ItemType.habit ? -1 : 1;
@@ -149,7 +188,7 @@ class _MyDayScreenState extends State<MyDayScreen>
         final progress = totalCount > 0 ? doneCount / totalCount : 0.0;
 
         return Scaffold(
-          backgroundColor: _MC.bg,
+          backgroundColor: _MC.bg(context),
           body: SafeArea(
             child: Column(
               children: [
@@ -180,7 +219,8 @@ class _MyDayScreenState extends State<MyDayScreen>
     );
   }
 
-  Widget _buildHeader(BuildContext ctx, double progress, int done, int total) {
+  Widget _buildHeader(
+      BuildContext ctx, double progress, int done, int total) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
       child: Row(
@@ -194,7 +234,7 @@ class _MyDayScreenState extends State<MyDayScreen>
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: _MC.textSec,
+                    color: _MC.textSec(context),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -203,36 +243,36 @@ class _MyDayScreenState extends State<MyDayScreen>
                   style: GoogleFonts.inter(
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    color: _MC.textPrimary(context),
                     letterSpacing: -0.5,
                   ),
                 ),
               ],
             ),
           ),
-          // Quick nav to full task/habit screens
-          _miniNavButton(Icons.checklist_rounded, _MC.purple, () {
-            Navigator.push(
-                ctx, MaterialPageRoute(builder: (_) => const TaskScreen()));
+          _miniNavButton(ctx, Icons.checklist_rounded, _MC.purple, () {
+            Navigator.push(ctx,
+                MaterialPageRoute(builder: (_) => const TaskScreen()));
           }),
           const SizedBox(width: 8),
-          _miniNavButton(Icons.repeat_rounded, _MC.mint, () {
-            Navigator.push(
-                ctx, MaterialPageRoute(builder: (_) => const HabitsScreen()));
+          _miniNavButton(ctx, Icons.repeat_rounded, _MC.mint, () {
+            Navigator.push(ctx,
+                MaterialPageRoute(builder: (_) => const HabitsScreen()));
           }),
         ],
       ),
     );
   }
 
-  Widget _miniNavButton(IconData icon, Color color, VoidCallback onTap) {
+  Widget _miniNavButton(
+      BuildContext ctx, IconData icon, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
@@ -251,18 +291,24 @@ class _MyDayScreenState extends State<MyDayScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              _MC.purple.withValues(alpha: 0.12),
-              _MC.cyan.withValues(alpha: 0.06),
+              _MC.purple.withValues(alpha: 0.1),
+              _MC.cyan.withValues(alpha: 0.05),
             ],
           ),
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
+          border: Border.all(color: _MC.purple.withValues(alpha: 0.15)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            )
+          ],
         ),
         child: Column(
           children: [
             Row(
               children: [
-                // Circular progress
                 SizedBox(
                   width: 56,
                   height: 56,
@@ -273,7 +319,7 @@ class _MyDayScreenState extends State<MyDayScreen>
                         value: progress,
                         strokeWidth: 5,
                         strokeCap: StrokeCap.round,
-                        backgroundColor: Colors.white.withValues(alpha: 0.06),
+                        backgroundColor: _MC.surface(context),
                         valueColor: AlwaysStoppedAnimation(
                           progress >= 1.0 ? _MC.gold : _MC.cyan,
                         ),
@@ -286,7 +332,7 @@ class _MyDayScreenState extends State<MyDayScreen>
                           style: GoogleFonts.inter(
                             fontSize: progress >= 1.0 ? 22 : 14,
                             fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                            color: _MC.textPrimary(context),
                           ),
                         ),
                       ),
@@ -305,7 +351,7 @@ class _MyDayScreenState extends State<MyDayScreen>
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                          color: _MC.textPrimary(context),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -316,7 +362,7 @@ class _MyDayScreenState extends State<MyDayScreen>
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: _MC.textSec,
+                          color: _MC.textSec(context),
                         ),
                       ),
                     ],
@@ -325,13 +371,12 @@ class _MyDayScreenState extends State<MyDayScreen>
               ],
             ),
             const SizedBox(height: 14),
-            // Progress bar
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 6,
-                backgroundColor: Colors.white.withValues(alpha: 0.06),
+                backgroundColor: _MC.surface(context),
                 valueColor: AlwaysStoppedAnimation(
                   progress >= 1.0 ? _MC.gold : _MC.cyan,
                 ),
@@ -363,26 +408,29 @@ class _MyDayScreenState extends State<MyDayScreen>
                 margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: sel ? _MC.purple.withValues(alpha: 0.15) : _MC.card,
+                  color: sel
+                      ? _MC.purple.withValues(alpha: 0.12)
+                      : _MC.card(context),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: sel
-                        ? _MC.purple.withValues(alpha: 0.4)
-                        : Colors.transparent,
+                        ? _MC.purple.withValues(alpha: 0.35)
+                        : _MC.border(context),
                   ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(filters[i].$2,
-                        size: 16, color: sel ? _MC.purple : _MC.textSec),
+                        size: 16,
+                        color: sel ? _MC.purple : _MC.textSec(context)),
                     const SizedBox(width: 6),
                     Text(
                       filters[i].$1,
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: sel ? _MC.purple : _MC.textSec,
+                        color: sel ? _MC.purple : _MC.textSec(context),
                       ),
                     ),
                   ],
@@ -400,24 +448,25 @@ class _MyDayScreenState extends State<MyDayScreen>
       margin: const EdgeInsets.symmetric(horizontal: 20),
       height: 40,
       decoration: BoxDecoration(
-        color: _MC.card,
+        color: _MC.card(context),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _MC.border(context)),
       ),
       child: TabBar(
         controller: _tabCtrl,
         indicator: BoxDecoration(
-          color: _MC.cyan.withValues(alpha: 0.15),
+          color: _MC.cyan.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _MC.cyan.withValues(alpha: 0.3)),
         ),
         indicatorSize: TabBarIndicatorSize.tab,
         dividerColor: Colors.transparent,
         labelStyle:
-            GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700),
+        GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700),
         unselectedLabelStyle:
-            GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500),
+        GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500),
         labelColor: _MC.cyan,
-        unselectedLabelColor: _MC.textSec,
+        unselectedLabelColor: _MC.textSec(context),
         tabs: const [
           Tab(text: 'Today'),
           Tab(text: 'Upcoming'),
@@ -430,9 +479,7 @@ class _MyDayScreenState extends State<MyDayScreen>
   // ── Today Tab ──
   Widget _buildTodayTab(List<_UnifiedItem> items, TaskProvider tasks,
       HabitProvider habits, GameProvider game) {
-    final activeItems = items.where((i) => !i.isDone).toList();
-
-    if (activeItems.isEmpty && items.isEmpty) {
+    if (items.isEmpty) {
       return _buildEmptyState(
         '🌟',
         'Your day is clear!',
@@ -459,9 +506,16 @@ class _MyDayScreenState extends State<MyDayScreen>
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       decoration: BoxDecoration(
-        color: _MC.card,
+        color: _MC.card(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _MC.cyan.withValues(alpha: 0.3)),
+        border: Border.all(color: _MC.cyan.withValues(alpha: 0.35)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          )
+        ],
       ),
       child: Row(
         children: [
@@ -472,12 +526,13 @@ class _MyDayScreenState extends State<MyDayScreen>
               controller: _addCtrl,
               autofocus: true,
               style: GoogleFonts.inter(
-                  color: Colors.white,
+                  color: _MC.textPrimary(context),
                   fontSize: 14,
                   fontWeight: FontWeight.w500),
               decoration: InputDecoration(
                 hintText: 'Quick add task...',
-                hintStyle: GoogleFonts.inter(color: _MC.textSec, fontSize: 14),
+                hintStyle: GoogleFonts.inter(
+                    color: _MC.textSec(context), fontSize: 14),
                 border: InputBorder.none,
               ),
               onSubmitted: (val) => _quickAdd(tasks, val),
@@ -494,7 +549,7 @@ class _MyDayScreenState extends State<MyDayScreen>
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: _MC.cyan.withValues(alpha: 0.15),
+                color: _MC.cyan.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
@@ -531,7 +586,9 @@ class _MyDayScreenState extends State<MyDayScreen>
 
     return Dismissible(
       key: Key(item.id),
-      direction: isHabit ? DismissDirection.none : DismissDirection.endToStart,
+      direction: isHabit
+          ? DismissDirection.none
+          : DismissDirection.endToStart,
       background: Container(
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
@@ -551,19 +608,28 @@ class _MyDayScreenState extends State<MyDayScreen>
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: item.isDone ? _MC.card.withValues(alpha: 0.5) : _MC.card,
+            color: item.isDone
+                ? _MC.card(context).withValues(alpha: 0.7)
+                : _MC.card(context),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: item.isDone
-                  ? Colors.white.withValues(alpha: 0.03)
-                  : item.color.withValues(alpha: 0.15),
+                  ? _MC.border(context)
+                  : item.color.withValues(alpha: 0.2),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              )
+            ],
           ),
           child: Row(
             children: [
-              // Checkbox
               GestureDetector(
                 onTap: () => _toggleItem(item, tasks, habits, game),
                 child: AnimatedContainer(
@@ -583,15 +649,15 @@ class _MyDayScreenState extends State<MyDayScreen>
                     ),
                   ),
                   child: item.isDone
-                      ? Icon(Icons.check_rounded, color: item.color, size: 16)
+                      ? Icon(Icons.check_rounded,
+                      color: item.color, size: 16)
                       : null,
                 ),
               ),
               const SizedBox(width: 14),
-              // Emoji
-              Text(item.emoji, style: const TextStyle(fontSize: 20)),
+              Text(item.emoji,
+                  style: const TextStyle(fontSize: 20)),
               const SizedBox(width: 12),
-              // Title + subtitle
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -601,10 +667,13 @@ class _MyDayScreenState extends State<MyDayScreen>
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: item.isDone ? _MC.textSec : Colors.white,
-                        decoration:
-                            item.isDone ? TextDecoration.lineThrough : null,
-                        decorationColor: _MC.textSec,
+                        color: item.isDone
+                            ? _MC.textSec(context)
+                            : _MC.textPrimary(context),
+                        decoration: item.isDone
+                            ? TextDecoration.lineThrough
+                            : null,
+                        decorationColor: _MC.textSec(context),
                       ),
                     ),
                     if (item.subtitle != null) ...[
@@ -614,20 +683,20 @@ class _MyDayScreenState extends State<MyDayScreen>
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
-                          color: _MC.textSec,
+                          color: _MC.textSec(context),
                         ),
                       ),
                     ],
                   ],
                 ),
               ),
-              // Type badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: isHabit
-                      ? _MC.mint.withValues(alpha: 0.12)
-                      : _MC.purple.withValues(alpha: 0.12),
+                      ? _MC.mint.withValues(alpha: 0.1)
+                      : _MC.purple.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -651,8 +720,8 @@ class _MyDayScreenState extends State<MyDayScreen>
     );
   }
 
-  void _toggleItem(_UnifiedItem item, TaskProvider tasks, HabitProvider habits,
-      GameProvider game) {
+  void _toggleItem(_UnifiedItem item, TaskProvider tasks,
+      HabitProvider habits, GameProvider game) {
     if (item.type == _ItemType.task) {
       final taskId = item.id.replaceFirst('task_', '');
       tasks.toggleTaskStatus(taskId);
@@ -675,8 +744,9 @@ class _MyDayScreenState extends State<MyDayScreen>
     final now = DateTime.now();
     final upcoming = tasks.tasks
         .where((t) =>
-            t.status == TaskStatus.active &&
-            t.dueDate.isAfter(DateTime(now.year, now.month, now.day)))
+    t.status == TaskStatus.active &&
+        t.dueDate.isAfter(
+            DateTime(now.year, now.month, now.day)))
         .toList()
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
 
@@ -685,7 +755,6 @@ class _MyDayScreenState extends State<MyDayScreen>
           '📅', 'No upcoming tasks', 'Add tasks with future due dates');
     }
 
-    // Group by date
     final groups = <String, List<TaskModel>>{};
     for (final t in upcoming) {
       final key = DateFormat('MMM dd, yyyy').format(t.dueDate);
@@ -718,13 +787,21 @@ class _MyDayScreenState extends State<MyDayScreen>
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: _MC.card,
+        color: _MC.card(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
+        border: Border.all(color: _MC.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          )
+        ],
       ),
       child: Row(
         children: [
-          Text(t.categoryEmoji, style: const TextStyle(fontSize: 18)),
+          Text(t.categoryEmoji,
+              style: const TextStyle(fontSize: 18)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -734,11 +811,11 @@ class _MyDayScreenState extends State<MyDayScreen>
                     style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white)),
+                        color: _MC.textPrimary(context))),
                 if (t.description != null && t.description!.isNotEmpty)
                   Text(t.description!,
-                      style:
-                          GoogleFonts.inter(fontSize: 11, color: _MC.textSec),
+                      style: GoogleFonts.inter(
+                          fontSize: 11, color: _MC.textSec(context)),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
               ],
@@ -752,8 +829,8 @@ class _MyDayScreenState extends State<MyDayScreen>
               color: t.priority == TaskPriority.high
                   ? _MC.red
                   : t.priority == TaskPriority.medium
-                      ? _MC.orange
-                      : _MC.textSec,
+                  ? _MC.orange
+                  : _MC.textSec(context),
             ),
           ),
         ],
@@ -762,8 +839,8 @@ class _MyDayScreenState extends State<MyDayScreen>
   }
 
   // ── Completed Tab ──
-  Widget _buildCompletedTab(
-      List<_UnifiedItem> items, TaskProvider tasks, HabitProvider habits) {
+  Widget _buildCompletedTab(List<_UnifiedItem> items, TaskProvider tasks,
+      HabitProvider habits) {
     final done = items.where((i) => i.isDone).toList();
     if (done.isEmpty) {
       return _buildEmptyState(
@@ -779,8 +856,9 @@ class _MyDayScreenState extends State<MyDayScreen>
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: _MC.card.withValues(alpha: 0.5),
+            color: _MC.card(context).withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _MC.border(context)),
           ),
           child: Row(
             children: [
@@ -791,10 +869,12 @@ class _MyDayScreenState extends State<MyDayScreen>
                   shape: BoxShape.circle,
                   color: item.color.withValues(alpha: 0.2),
                 ),
-                child: Icon(Icons.check_rounded, color: item.color, size: 14),
+                child: Icon(Icons.check_rounded,
+                    color: item.color, size: 14),
               ),
               const SizedBox(width: 12),
-              Text(item.emoji, style: const TextStyle(fontSize: 18)),
+              Text(item.emoji,
+                  style: const TextStyle(fontSize: 18)),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -802,14 +882,15 @@ class _MyDayScreenState extends State<MyDayScreen>
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: _MC.textSec,
+                    color: _MC.textSec(context),
                     decoration: TextDecoration.lineThrough,
-                    decorationColor: _MC.textSec,
+                    decorationColor: _MC.textSec(context),
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: item.type == _ItemType.habit
                       ? _MC.mint.withValues(alpha: 0.1)
@@ -821,7 +902,9 @@ class _MyDayScreenState extends State<MyDayScreen>
                   style: GoogleFonts.inter(
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
-                    color: item.type == _ItemType.habit ? _MC.mint : _MC.purple,
+                    color: item.type == _ItemType.habit
+                        ? _MC.mint
+                        : _MC.purple,
                   ),
                 ),
               ),
@@ -832,7 +915,8 @@ class _MyDayScreenState extends State<MyDayScreen>
     );
   }
 
-  Widget _buildEmptyState(String emoji, String title, String subtitle) {
+  Widget _buildEmptyState(
+      String emoji, String title, String subtitle) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -843,13 +927,13 @@ class _MyDayScreenState extends State<MyDayScreen>
               style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white)),
+                  color: _MC.textPrimary(context))),
           const SizedBox(height: 6),
           Text(subtitle,
               style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: _MC.textSec)),
+                  color: _MC.textSec(context))),
         ],
       ),
     );
@@ -859,11 +943,11 @@ class _MyDayScreenState extends State<MyDayScreen>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Quick add toggle
         FloatingActionButton.small(
           heroTag: 'quick_add',
-          backgroundColor: _MC.cardLight,
-          onPressed: () => setState(() => _showAddField = !_showAddField),
+          backgroundColor: _MC.cardLight_(context),
+          onPressed: () =>
+              setState(() => _showAddField = !_showAddField),
           child: Icon(
             _showAddField ? Icons.close_rounded : Icons.flash_on_rounded,
             color: _MC.cyan,
@@ -871,7 +955,6 @@ class _MyDayScreenState extends State<MyDayScreen>
           ),
         ),
         const SizedBox(height: 8),
-        // Full add
         FloatingActionButton(
           heroTag: 'add_task',
           backgroundColor: _MC.purple,
@@ -887,6 +970,7 @@ class _MyDayScreenState extends State<MyDayScreen>
     final descCtrl = TextEditingController();
     var priority = TaskPriority.medium;
     var category = TaskCategory.personal;
+    final isDark = Theme.of(ctx).brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: ctx,
@@ -894,11 +978,14 @@ class _MyDayScreenState extends State<MyDayScreen>
       backgroundColor: Colors.transparent,
       builder: (c) => StatefulBuilder(
         builder: (c, setSS) => Container(
-          padding: EdgeInsets.fromLTRB(
-              24, 16, 24, MediaQuery.of(c).viewInsets.bottom + 24),
-          decoration: const BoxDecoration(
-            color: Color(0xFF16161F),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          padding: EdgeInsets.fromLTRB(24, 16, 24,
+              MediaQuery.of(c).viewInsets.bottom + 24),
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF16161F)
+                : Colors.white,
+            borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -909,7 +996,8 @@ class _MyDayScreenState extends State<MyDayScreen>
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: _MC.textSec(context)
+                        .withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -919,53 +1007,54 @@ class _MyDayScreenState extends State<MyDayScreen>
                   style: GoogleFonts.inter(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
-                      color: Colors.white)),
+                      color: _MC.textPrimary(context))),
               const SizedBox(height: 16),
-              // Name
               TextField(
                 controller: nameCtrl,
                 autofocus: true,
                 style: GoogleFonts.inter(
-                    color: Colors.white, fontWeight: FontWeight.w500),
+                    color: _MC.textPrimary(context),
+                    fontWeight: FontWeight.w500),
                 decoration: InputDecoration(
                   hintText: 'Task name',
-                  hintStyle: GoogleFonts.inter(color: _MC.textSec),
+                  hintStyle: GoogleFonts.inter(
+                      color: _MC.textSec(context)),
                   filled: true,
-                  fillColor: _MC.card,
+                  fillColor: _MC.surface(context),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,
                   ),
-                  prefixIcon:
-                      const Icon(Icons.edit_rounded, color: _MC.cyan, size: 20),
+                  prefixIcon: const Icon(Icons.edit_rounded,
+                      color: _MC.cyan, size: 20),
                 ),
               ),
               const SizedBox(height: 10),
-              // Description
               TextField(
                 controller: descCtrl,
                 style: GoogleFonts.inter(
-                    color: Colors.white, fontWeight: FontWeight.w500),
+                    color: _MC.textPrimary(context),
+                    fontWeight: FontWeight.w500),
                 decoration: InputDecoration(
                   hintText: 'Description (optional)',
-                  hintStyle: GoogleFonts.inter(color: _MC.textSec),
+                  hintStyle: GoogleFonts.inter(
+                      color: _MC.textSec(context)),
                   filled: true,
-                  fillColor: _MC.card,
+                  fillColor: _MC.surface(context),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,
                   ),
-                  prefixIcon: const Icon(Icons.notes_rounded,
-                      color: _MC.textSec, size: 20),
+                  prefixIcon: Icon(Icons.notes_rounded,
+                      color: _MC.textSec(context), size: 20),
                 ),
               ),
               const SizedBox(height: 14),
-              // Priority
               Text('Priority',
                   style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: _MC.textSec)),
+                      color: _MC.textSec(context))),
               const SizedBox(height: 8),
               Row(
                 children: TaskPriority.values.map((p) {
@@ -973,30 +1062,36 @@ class _MyDayScreenState extends State<MyDayScreen>
                   final color = p == TaskPriority.high
                       ? _MC.red
                       : p == TaskPriority.medium
-                          ? _MC.orange
-                          : _MC.cyan;
+                      ? _MC.orange
+                      : _MC.cyan;
                   return Expanded(
                     child: GestureDetector(
                       onTap: () => setSS(() => priority = p),
                       child: Container(
                         margin: EdgeInsets.only(
                             right: p != TaskPriority.high ? 8 : 0),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10),
                         decoration: BoxDecoration(
-                          color: sel ? color.withValues(alpha: 0.15) : _MC.card,
+                          color: sel
+                              ? color.withValues(alpha: 0.12)
+                              : _MC.surface(context),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                               color: sel
-                                  ? color.withValues(alpha: 0.4)
+                                  ? color.withValues(alpha: 0.5)
                                   : Colors.transparent),
                         ),
                         child: Center(
                           child: Text(
-                            p.name[0].toUpperCase() + p.name.substring(1),
+                            p.name[0].toUpperCase() +
+                                p.name.substring(1),
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: sel ? color : _MC.textSec,
+                              color: sel
+                                  ? color
+                                  : _MC.textSec(context),
                             ),
                           ),
                         ),
@@ -1006,7 +1101,6 @@ class _MyDayScreenState extends State<MyDayScreen>
                 }).toList(),
               ),
               const SizedBox(height: 18),
-              // Add button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -1015,7 +1109,8 @@ class _MyDayScreenState extends State<MyDayScreen>
                     final task = TaskModel(
                       id: const Uuid().v4(),
                       name: nameCtrl.text.trim(),
-                      description: descCtrl.text.trim().isNotEmpty
+                      description:
+                      descCtrl.text.trim().isNotEmpty
                           ? descCtrl.text.trim()
                           : null,
                       dueDate: DateTime.now(),

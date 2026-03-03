@@ -9,18 +9,45 @@ import 'package:monojog/theme/app_theme.dart';
 import 'package:monojog/models/tshirt_model.dart';
 import 'package:monojog/services/merch_service.dart';
 
-// ── Garden color palette (dark neumorphic) ──
+// ── Garden adaptive color palette ──
 class _GC {
-  static const bg = AppTheme.darkBg;
-  static const card = AppTheme.darkCard;
-  static const green = AppTheme.primaryColor;
-  static const greenDark = AppTheme.secondaryColor;
-  static const greenLight = AppTheme.darkSurface;
-  static const greenPale = AppTheme.darkSurface;
-  static const lime = AppTheme.primaryColor;
-  static const gold = AppTheme.goldColor;
-  static const Color textDark = Color(0xFFFFFFFF);
-  static const Color textSec = Color(0xFF8B8FA3);
+  // Accent colors (same both modes)
+  static const green = Color(0xFF00BFA5);
+  static const greenDark = Color(0xFF00897B);
+  static const lime = Color(0xFF00BFA5);
+  static const gold = Color(0xFFFFB300);
+  static const red = Color(0xFFEF5350);
+
+  // Adaptive
+  static Color bg(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.darkBg
+          : const Color(0xFFF4FAF8);
+
+  static Color card(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.darkCard
+          : Colors.white;
+
+  static Color surface(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.darkSurface
+          : const Color(0xFFE8F5F2);
+
+  static Color textPrimary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? Colors.white
+          : const Color(0xFF1A2E2A);
+
+  static Color textSec(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF8B8FA3)
+          : const Color(0xFF5A7A75);
+
+  static Color border(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? Colors.white.withValues(alpha: 0.06)
+          : const Color(0xFFCCE8E3);
 }
 
 class GardenScreen extends StatefulWidget {
@@ -49,7 +76,7 @@ class _GardenScreenState extends State<GardenScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _GC.bg,
+      backgroundColor: _GC.bg(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -58,10 +85,10 @@ class _GardenScreenState extends State<GardenScreen>
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: const [
+                children: [
                   _StatisticsTab(),
-                  _FlowerGardenTab(),
-                  _MerchTab(),
+                  const _FlowerGardenTab(),
+                  const _MerchTab(),
                 ],
               ),
             ),
@@ -77,18 +104,18 @@ class _GardenScreenState extends State<GardenScreen>
       child: Row(
         children: [
           RichText(
-            text: const TextSpan(
+            text: TextSpan(
               children: [
                 TextSpan(
                   text: 'My Garden',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w900,
-                    color: _GC.textDark,
+                    color: _GC.textPrimary(context),
                     letterSpacing: 0.5,
                   ),
                 ),
-                TextSpan(
+                const TextSpan(
                   text: '  🌿',
                   style: TextStyle(fontSize: 22),
                 ),
@@ -99,10 +126,10 @@ class _GardenScreenState extends State<GardenScreen>
           Consumer<GameProvider>(
             builder: (ctx, game, _) {
               return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _GC.gold.withValues(alpha: 0.15),
+                  color: _GC.gold.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                       color: _GC.gold.withValues(alpha: 0.4), width: 1),
@@ -116,7 +143,7 @@ class _GardenScreenState extends State<GardenScreen>
                       style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFFFF8F00)),
+                          color: Color(0xFFE65100)),
                     ),
                   ],
                 ),
@@ -133,8 +160,9 @@ class _GardenScreenState extends State<GardenScreen>
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: _GC.card,
+        color: _GC.card(context),
         borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: _GC.border(context)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -145,7 +173,7 @@ class _GardenScreenState extends State<GardenScreen>
       child: TabBar(
         controller: _tabController,
         labelColor: Colors.white,
-        unselectedLabelColor: _GC.textSec,
+        unselectedLabelColor: _GC.textSec(context),
         indicator: BoxDecoration(
           gradient: const LinearGradient(
             colors: [_GC.green, _GC.lime],
@@ -155,7 +183,7 @@ class _GardenScreenState extends State<GardenScreen>
           borderRadius: BorderRadius.circular(26),
           boxShadow: [
             BoxShadow(
-              color: _GC.green.withValues(alpha: 0.35),
+              color: _GC.green.withValues(alpha: 0.3),
               blurRadius: 8,
               spreadRadius: 1,
             ),
@@ -163,9 +191,10 @@ class _GardenScreenState extends State<GardenScreen>
         ),
         indicatorSize: TabBarIndicatorSize.tab,
         dividerColor: Colors.transparent,
-        labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+        labelStyle:
+        const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
         unselectedLabelStyle:
-            const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+        const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
         tabs: const [
           Tab(
             child: Row(
@@ -219,7 +248,6 @@ class _StatisticsTab extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Summary cards row 1
               Row(
                 children: [
                   Expanded(
@@ -268,26 +296,24 @@ class _StatisticsTab extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 24),
-
-              // Weekly chart header
-              const Text(
+              Text(
                 'Weekly Focus (minutes)',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: _GC.textDark,
+                  color: _GC.textPrimary(context),
                   letterSpacing: 0.3,
                 ),
               ),
               const SizedBox(height: 14),
-
-              // Bar Chart
               Container(
                 height: 220,
-                padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
+                padding:
+                const EdgeInsets.fromLTRB(12, 20, 12, 12),
                 decoration: BoxDecoration(
-                  color: _GC.card,
+                  color: _GC.card(context),
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: _GC.border(context)),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.05),
@@ -307,9 +333,8 @@ class _StatisticsTab extends StatelessWidget {
                     barTouchData: BarTouchData(
                       enabled: true,
                       touchTooltipData: BarTouchTooltipData(
-                        // tooltipBgColor: _GC.greenDark,
-                        // tooltipRoundedRadius: 10,
-                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        getTooltipItem: (group, groupIndex, rod,
+                            rodIndex) {
                           return BarTooltipItem(
                             '${rod.toY.toInt()} min',
                             const TextStyle(
@@ -327,22 +352,17 @@ class _StatisticsTab extends StatelessWidget {
                           showTitles: true,
                           getTitlesWidget: (value, meta) {
                             const days = [
-                              'Mon',
-                              'Tue',
-                              'Wed',
-                              'Thu',
-                              'Fri',
-                              'Sat',
-                              'Sun'
+                              'Mon', 'Tue', 'Wed', 'Thu',
+                              'Fri', 'Sat', 'Sun'
                             ];
                             return Padding(
                               padding: const EdgeInsets.only(top: 6),
                               child: Text(
                                 days[value.toInt() % 7],
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: _GC.textSec),
+                                    color: _GC.textSec(context)),
                               ),
                             );
                           },
@@ -354,9 +374,9 @@ class _StatisticsTab extends StatelessWidget {
                           reservedSize: 36,
                           getTitlesWidget: (value, meta) => Text(
                             '${value.toInt()}',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 9,
-                                color: _GC.textSec,
+                                color: _GC.textSec(context),
                                 fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -371,29 +391,28 @@ class _StatisticsTab extends StatelessWidget {
                       drawVerticalLine: false,
                       horizontalInterval: 30,
                       getDrawingHorizontalLine: (value) => FlLine(
-                          color: Colors.grey.withValues(alpha: 0.15),
+                          color: _GC.border(context),
                           strokeWidth: 1),
                     ),
                     borderData: FlBorderData(show: false),
-                    barGroups: _buildWeeklyBars(profile.totalFocusMinutes),
+                    barGroups: _buildWeeklyBars(
+                        profile.totalFocusMinutes, context),
                   ),
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Concentration trend section
-              const Text(
+              Text(
                 'Concentration Score',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: _GC.textDark,
+                  color: _GC.textPrimary(context),
                   letterSpacing: 0.3,
                 ),
               ),
               const SizedBox(height: 14),
               _buildConcentrationCard(
-                  focus.pomodoroCount, profile.totalFocusMinutes),
+                  focus.pomodoroCount, profile.totalFocusMinutes, context),
             ],
           ),
         );
@@ -401,14 +420,16 @@ class _StatisticsTab extends StatelessWidget {
     );
   }
 
-  List<BarChartGroupData> _buildWeeklyBars(int totalMinutes) {
+  List<BarChartGroupData> _buildWeeklyBars(
+      int totalMinutes, BuildContext context) {
     final rng = Random(totalMinutes);
     final weekData = List.generate(7, (i) {
-      final base = (totalMinutes / 7).clamp(0, 120).toInt();
+      final base =
+      (totalMinutes / 7).clamp(0, 120).toInt();
       final variance = rng.nextInt(40) - 15;
       return max(0, base + variance).toDouble();
     });
-    weekData[6] = 0; // today always starts at 0
+    weekData[6] = 0;
 
     return List.generate(7, (i) {
       return BarChartGroupData(
@@ -416,20 +437,18 @@ class _StatisticsTab extends StatelessWidget {
         barRods: [
           BarChartRodData(
             toY: weekData[i],
-            gradient: LinearGradient(
+            gradient: const LinearGradient(
               begin: Alignment.bottomCenter,
               end: Alignment.topCenter,
-              colors: [
-                _GC.green.withValues(alpha: 0.6),
-                _GC.lime,
-              ],
+              colors: [_GC.green, Color(0xFF80CBC4)],
             ),
             width: 18,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+            borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(6)),
             backDrawRodData: BackgroundBarChartRodData(
               show: true,
               toY: 120,
-              color: _GC.greenLight.withValues(alpha: 0.3),
+              color: _GC.green.withValues(alpha: 0.08),
             ),
           ),
         ],
@@ -437,13 +456,16 @@ class _StatisticsTab extends StatelessWidget {
     });
   }
 
-  Widget _buildConcentrationCard(int pomodoros, int totalMinutes) {
-    final score = ((pomodoros * 25 + totalMinutes) / 10).clamp(0, 100).toInt();
+  Widget _buildConcentrationCard(
+      int pomodoros, int totalMinutes, BuildContext context) {
+    final score =
+    ((pomodoros * 25 + totalMinutes) / 10).clamp(0, 100).toInt();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _GC.card,
+        color: _GC.card(context),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _GC.border(context)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -465,8 +487,10 @@ class _StatisticsTab extends StatelessWidget {
                   child: CircularProgressIndicator(
                     value: score / 100,
                     strokeWidth: 10,
-                    backgroundColor: _GC.greenLight.withValues(alpha: 0.5),
-                    valueColor: const AlwaysStoppedAnimation<Color>(_GC.green),
+                    backgroundColor:
+                    _GC.green.withValues(alpha: 0.12),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                        _GC.green),
                     strokeCap: StrokeCap.round,
                   ),
                 ),
@@ -476,18 +500,18 @@ class _StatisticsTab extends StatelessWidget {
                     children: [
                       Text(
                         '$score',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w900,
-                          color: _GC.textDark,
+                          color: _GC.textPrimary(context),
                         ),
                       ),
-                      const Text(
+                      Text(
                         '%',
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: _GC.textSec),
+                            color: _GC.textSec(context)),
                       ),
                     ],
                   ),
@@ -500,12 +524,12 @@ class _StatisticsTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Concentration Index',
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: _GC.textDark),
+                      color: _GC.textPrimary(context)),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -513,10 +537,10 @@ class _StatisticsTab extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: _GC.green.withValues(alpha: 0.9)),
+                      color: _GC.green),
                 ),
                 const SizedBox(height: 10),
-                _miniChip('$pomodoros 🍅 Pomodoros'),
+                _miniChip('$pomodoros 🍅 Pomodoros', context),
               ],
             ),
           ),
@@ -533,16 +557,18 @@ class _StatisticsTab extends StatelessWidget {
     return '⏰ Start your first session!';
   }
 
-  Widget _miniChip(String label) {
+  Widget _miniChip(String label, BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: _GC.greenPale,
+        color: _GC.surface(context),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(label,
-          style: const TextStyle(
-              fontSize: 10, fontWeight: FontWeight.w700, color: _GC.greenDark)),
+          style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: _GC.greenDark)),
     );
   }
 }
@@ -568,9 +594,10 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _GC.card,
+        color: _GC.card(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: 0.18), width: 1.5),
+        border:
+        Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.07),
@@ -617,10 +644,10 @@ class _StatCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(label,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: _GC.textSec)),
+                  color: _GC.textSec(context))),
         ],
       ),
     );
@@ -657,9 +684,11 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    _sparkleAnim = Tween<double>(begin: 0.85, end: 1.0).animate(
-      CurvedAnimation(parent: _sparkleController, curve: Curves.easeInOut),
-    );
+    _sparkleAnim =
+        Tween<double>(begin: 0.85, end: 1.0).animate(
+          CurvedAnimation(
+              parent: _sparkleController, curve: Curves.easeInOut),
+        );
   }
 
   @override
@@ -684,11 +713,13 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
         final totalMin = profile.totalFocusMinutes;
         final stage = _currentStage(totalMin);
         final nextStageIndex =
-            _stages.indexWhere((s) => s.requiredMinutes > totalMin);
-        final nextStage = nextStageIndex >= 0 ? _stages[nextStageIndex] : null;
+        _stages.indexWhere((s) => s.requiredMinutes > totalMin);
+        final nextStage =
+        nextStageIndex >= 0 ? _stages[nextStageIndex] : null;
         final progress = nextStage != null
             ? (totalMin - stage.requiredMinutes) /
-                max(1, nextStage.requiredMinutes - stage.requiredMinutes)
+            max(1,
+                nextStage.requiredMinutes - stage.requiredMinutes)
             : 1.0;
         final fullTrees = totalMin ~/ 600;
         final gardenPlants = _buildGardenPlants(totalMin);
@@ -698,7 +729,8 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _buildCurrentPlant(stage, progress, nextStage, totalMin),
+              _buildCurrentPlant(
+                  stage, progress, nextStage, totalMin),
               const SizedBox(height: 24),
               if (fullTrees > 0) _buildRewardBanner(fullTrees),
               if (fullTrees > 0) const SizedBox(height: 20),
@@ -715,25 +747,28 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
   }
 
   Widget _buildCurrentPlant(
-    _PlantStage stage,
-    double progress,
-    _PlantStage? nextStage,
-    int totalMin,
-  ) {
+      _PlantStage stage,
+      double progress,
+      _PlantStage? nextStage,
+      int totalMin,
+      ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFE8F5E9), Color(0xFFF1F8E9)],
+          colors: isDark
+              ? [const Color(0xFF1A2E2A), const Color(0xFF0F1F1C)]
+              : [const Color(0xFFE8F5E9), const Color(0xFFF1F8E9)],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _GC.green.withValues(alpha: 0.2)),
+        border: Border.all(color: _GC.green.withValues(alpha: 0.25)),
         boxShadow: [
           BoxShadow(
-            color: _GC.green.withValues(alpha: 0.08),
+            color: _GC.green.withValues(alpha: 0.1),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -745,27 +780,25 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
             animation: _sparkleAnim,
             builder: (_, __) => Transform.scale(
               scale: _sparkleAnim.value,
-              child: Text(
-                stage.emoji,
-                style: const TextStyle(fontSize: 80),
-              ),
+              child: Text(stage.emoji,
+                  style: const TextStyle(fontSize: 80)),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             stage.name,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w900,
-              color: _GC.textDark,
+              color: _GC.textPrimary(context),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             stage.message,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: _GC.textSec,
+              color: _GC.textSec(context),
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -780,15 +813,15 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
                         fontWeight: FontWeight.w700,
                         color: _GC.green)),
                 Text('Next: ${nextStage.emoji} ${nextStage.name}',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: _GC.textSec)),
+                        color: _GC.textSec(context))),
                 Text('${nextStage.requiredMinutes} min',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: _GC.textSec)),
+                        color: _GC.textSec(context))),
               ],
             ),
             const SizedBox(height: 8),
@@ -796,23 +829,25 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
               borderRadius: BorderRadius.circular(8),
               child: TweenAnimationBuilder<double>(
                 duration: const Duration(milliseconds: 800),
-                tween: Tween(begin: 0, end: progress.clamp(0.0, 1.0)),
+                tween: Tween(
+                    begin: 0, end: progress.clamp(0.0, 1.0)),
                 curve: Curves.easeOutCubic,
                 builder: (_, val, __) => LinearProgressIndicator(
                   value: val,
                   minHeight: 10,
-                  backgroundColor: _GC.greenLight.withValues(alpha: 0.5),
-                  valueColor: const AlwaysStoppedAnimation<Color>(_GC.green),
+                  backgroundColor: _GC.green.withValues(alpha: 0.1),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                      _GC.green),
                 ),
               ),
             ),
           ] else ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 20, vertical: 8),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [_GC.green, _GC.lime],
-                ),
+                    colors: [_GC.green, _GC.lime]),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Text(
@@ -831,11 +866,14 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
   }
 
   Widget _buildRewardBanner(int trees) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFF8E1), Color(0xFFFFF3CD)],
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF2A2000), const Color(0xFF1A1500)]
+              : [const Color(0xFFFFF8E1), const Color(0xFFFFF3CD)],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _GC.gold.withValues(alpha: 0.4)),
@@ -850,17 +888,22 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
               children: [
                 Text(
                   "You've grown $trees full tree${trees > 1 ? 's' : ''}!",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF5D4037),
+                    color: isDark
+                        ? const Color(0xFFFFCC80)
+                        : const Color(0xFF5D4037),
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${trees * 600} minutes of pure focus. Amazing! 🎉',
-                  style:
-                      const TextStyle(fontSize: 12, color: Color(0xFF795548)),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? const Color(0xFFBCAAA4)
+                          : const Color(0xFF795548)),
                 ),
               ],
             ),
@@ -896,20 +939,21 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Your Garden',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: _GC.textDark,
+            color: _GC.textPrimary(context),
           ),
         ),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _GC.card,
+            color: _GC.card(context),
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _GC.border(context)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.04),
@@ -921,7 +965,8 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
           child: GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate:
+            const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3,
               childAspectRatio: 1.0,
               crossAxisSpacing: 8,
@@ -935,21 +980,23 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
                 curve: Curves.easeOutBack,
                 decoration: BoxDecoration(
                   color: p.isNotEmpty
-                      ? _GC.greenPale
-                      : Colors.white.withValues(alpha: 0.04),
+                      ? _GC.green.withValues(alpha: 0.08)
+                      : _GC.surface(context),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: p.isNotEmpty
                         ? _GC.green.withValues(alpha: 0.25)
-                        : Colors.white.withValues(alpha: 0.08),
+                        : _GC.border(context),
                   ),
                 ),
                 child: Center(
                   child: p.isNotEmpty
-                      ? Text(p, style: const TextStyle(fontSize: 36))
+                      ? Text(p,
+                      style: const TextStyle(fontSize: 36))
                       : Icon(Icons.add_rounded,
-                          color: Colors.white.withValues(alpha: 0.25),
-                          size: 28),
+                      color: _GC.textSec(context)
+                          .withValues(alpha: 0.4),
+                      size: 28),
                 ),
               );
             },
@@ -963,12 +1010,12 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Growth Milestones',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: _GC.textDark,
+            color: _GC.textPrimary(context),
           ),
         ),
         const SizedBox(height: 12),
@@ -978,26 +1025,28 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
           return AnimatedContainer(
             duration: const Duration(milliseconds: 400),
             margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: isCurrent
-                  ? _GC.green.withValues(alpha: 0.1)
+                  ? _GC.green.withValues(alpha: 0.08)
                   : isUnlocked
-                      ? _GC.greenPale
-                      : _GC.card,
+                  ? _GC.surface(context)
+                  : _GC.card(context),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isCurrent
                     ? _GC.green
                     : isUnlocked
-                        ? _GC.green.withValues(alpha: 0.3)
-                        : Colors.grey.withValues(alpha: 0.15),
+                    ? _GC.green.withValues(alpha: 0.2)
+                    : _GC.border(context),
                 width: isCurrent ? 2 : 1,
               ),
             ),
             child: Row(
               children: [
-                Text(stage.emoji, style: const TextStyle(fontSize: 28)),
+                Text(stage.emoji,
+                    style: const TextStyle(fontSize: 28)),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -1008,23 +1057,26 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
-                          color: isUnlocked ? _GC.textDark : _GC.textSec,
+                          color: isUnlocked
+                              ? _GC.textPrimary(context)
+                              : _GC.textSec(context),
                         ),
                       ),
                       Text(
                         stage.requiredMinutes == 0
                             ? 'Starting point'
                             : '${stage.requiredMinutes} minutes of focus',
-                        style:
-                            const TextStyle(fontSize: 11, color: _GC.textSec),
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: _GC.textSec(context)),
                       ),
                     ],
                   ),
                 ),
                 if (isCurrent)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: _GC.green,
                       borderRadius: BorderRadius.circular(10),
@@ -1039,7 +1091,8 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
                   const Icon(Icons.check_circle_rounded,
                       color: _GC.green, size: 24)
                 else
-                  const Icon(Icons.lock_rounded, color: _GC.textSec, size: 24),
+                  Icon(Icons.lock_rounded,
+                      color: _GC.textSec(context), size: 24),
               ],
             ),
           );
@@ -1051,27 +1104,26 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
   Widget _buildBadgesSection(GameProvider game) {
     final rewards = game.rewards;
     if (rewards.isEmpty) return const SizedBox.shrink();
-
-    // Show all purchased or affordable rewards as garden trophies
     final unlockedRewards = rewards.take(6).toList();
     if (unlockedRewards.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Rewards & Badges',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: _GC.textDark,
+            color: _GC.textPrimary(context),
           ),
         ),
         const SizedBox(height: 12),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate:
+          const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             childAspectRatio: 0.9,
             crossAxisSpacing: 10,
@@ -1082,10 +1134,11 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
             final r = unlockedRewards[i];
             return Container(
               decoration: BoxDecoration(
-                color: _GC.card,
+                color: _GC.card(context),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                    color: _GC.gold.withValues(alpha: 0.3), width: 1),
+                    color: _GC.gold.withValues(alpha: 0.3),
+                    width: 1),
                 boxShadow: [
                   BoxShadow(
                     color: _GC.gold.withValues(alpha: 0.07),
@@ -1097,15 +1150,16 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(r.icon, style: const TextStyle(fontSize: 30)),
+                  Text(r.icon,
+                      style: const TextStyle(fontSize: 30)),
                   const SizedBox(height: 6),
                   Text(
                     r.name,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: _GC.textDark),
+                        color: _GC.textPrimary(context)),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1125,7 +1179,8 @@ class _PlantStage {
   final String message;
   final int requiredMinutes;
 
-  const _PlantStage(this.emoji, this.name, this.message, this.requiredMinutes);
+  const _PlantStage(
+      this.emoji, this.name, this.message, this.requiredMinutes);
 }
 
 // ════════════════════════════════════════════════
@@ -1161,7 +1216,8 @@ class _MerchTabState extends State<_MerchTab> {
         return StreamBuilder<List<TShirt>>(
           stream: MerchService.instance.watchTShirts(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
+            if (snapshot.connectionState ==
+                ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
 
@@ -1169,17 +1225,18 @@ class _MerchTabState extends State<_MerchTab> {
               return Center(
                 child: Text(
                   'Could not load t-shirts right now.',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+                  style: TextStyle(
+                      color: _GC.textSec(context)),
                 ),
               );
             }
 
             final tshirts = snapshot.data ?? const <TShirt>[];
             if (tshirts.isEmpty) {
-              return const Center(
+              return Center(
                 child: Text(
                   'No t-shirts available yet.',
-                  style: TextStyle(color: _GC.textSec),
+                  style: TextStyle(color: _GC.textSec(context)),
                 ),
               );
             }
@@ -1202,11 +1259,12 @@ class _MerchTabState extends State<_MerchTab> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: _GC.card,
+        color: _GC.card(context),
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: _GC.border(context)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1226,7 +1284,7 @@ class _MerchTabState extends State<_MerchTab> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: _GC.bg,
+                    color: _GC.surface(context),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Center(
@@ -1243,18 +1301,18 @@ class _MerchTabState extends State<_MerchTab> {
                     children: [
                       Text(
                         tshirt.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: _GC.textDark,
+                          color: _GC.textPrimary(context),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         tshirt.description,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: _GC.textSec,
+                          color: _GC.textSec(context),
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -1266,8 +1324,10 @@ class _MerchTabState extends State<_MerchTab> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: _GC.green.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
+                              color:
+                              _GC.green.withValues(alpha: 0.1),
+                              borderRadius:
+                              BorderRadius.circular(8),
                             ),
                             child: Text(
                               '₹${tshirt.price.toInt()}',
@@ -1349,22 +1409,16 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
 
   Future<void> _submitOrder() async {
     if (!_formKey.currentState!.validate()) return;
-
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please login first to place an order.'),
+        const SnackBar(
+          content: Text('Please login first to place an order.'),
           backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
         ),
       );
       return;
     }
-
     setState(() => _isSubmitting = true);
     try {
       final orderId =
@@ -1386,36 +1440,44 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
         transactionId: _trxIdController.text.trim(),
         orderedAt: DateTime.now(),
       );
-
       await MerchService.instance.placeOrder(order);
-
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Order placed for ${widget.tshirt.name}!'),
           backgroundColor: _GC.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
         ),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Failed to place order. Please try again.'),
+        const SnackBar(
+          content: Text('Failed to place order. Please try again.'),
           backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
         ),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  InputDecoration _fieldDecor(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: _GC.textSec(context)),
+      filled: true,
+      fillColor: _GC.surface(context),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide:
+        BorderSide(color: _GC.border(context), width: 1),
+      ),
+    );
   }
 
   @override
@@ -1424,9 +1486,10 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      decoration: const BoxDecoration(
-        color: _GC.bg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      decoration: BoxDecoration(
+        color: _GC.bg(context),
+        borderRadius:
+        const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -1441,7 +1504,8 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: _GC.textSec.withValues(alpha: 0.3),
+                    color:
+                    _GC.textSec(context).withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1449,10 +1513,8 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
               const SizedBox(height: 24),
               Row(
                 children: [
-                  Text(
-                    widget.tshirt.designEmoji,
-                    style: const TextStyle(fontSize: 32),
-                  ),
+                  Text(widget.tshirt.designEmoji,
+                      style: const TextStyle(fontSize: 32)),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -1460,10 +1522,10 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
                       children: [
                         Text(
                           'Order ${widget.tshirt.name}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
-                            color: _GC.textDark,
+                            color: _GC.textPrimary(context),
                           ),
                         ),
                         Text(
@@ -1480,14 +1542,12 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
                 ],
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Select Size',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: _GC.textSec,
-                ),
-              ),
+              Text('Select Size',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: _GC.textSec(context),
+                  )),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -1497,32 +1557,35 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
                     label: Text(size),
                     selected: isSelected,
                     onSelected: (selected) {
-                      if (selected) setState(() => _selectedSize = size);
+                      if (selected)
+                        setState(() => _selectedSize = size);
                     },
-                    selectedColor: _GC.green.withValues(alpha: 0.2),
-                    backgroundColor: _GC.card,
+                    selectedColor: _GC.green.withValues(alpha: 0.15),
+                    backgroundColor: _GC.surface(context),
                     labelStyle: TextStyle(
-                      color: isSelected ? _GC.green : _GC.textSec,
+                      color: isSelected
+                          ? _GC.green
+                          : _GC.textSec(context),
                       fontWeight: FontWeight.w800,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
-                        color: isSelected ? _GC.green : Colors.transparent,
+                        color: isSelected
+                            ? _GC.green
+                            : Colors.transparent,
                       ),
                     ),
                   );
                 }).toList(),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Select Color',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: _GC.textSec,
-                ),
-              ),
+              Text('Select Color',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: _GC.textSec(context),
+                  )),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -1532,32 +1595,34 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
                     label: Text(color),
                     selected: isSelected,
                     onSelected: (selected) {
-                      if (selected) setState(() => _selectedColor = color);
+                      if (selected)
+                        setState(() => _selectedColor = color);
                     },
-                    selectedColor: _GC.green.withValues(alpha: 0.2),
-                    backgroundColor: _GC.card,
+                    selectedColor: _GC.green.withValues(alpha: 0.15),
+                    backgroundColor: _GC.surface(context),
                     labelStyle: TextStyle(
-                      color: isSelected ? _GC.green : _GC.textSec,
+                      color: isSelected
+                          ? _GC.green
+                          : _GC.textSec(context),
                       fontWeight: FontWeight.w800,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
-                        color: isSelected ? _GC.green : Colors.transparent,
-                      ),
+                          color: isSelected
+                              ? _GC.green
+                              : Colors.transparent),
                     ),
                   );
                 }).toList(),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Payment Method',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: _GC.textSec,
-                ),
-              ),
+              Text('Payment Method',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: _GC.textSec(context),
+                  )),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -1567,19 +1632,23 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
                     label: Text(method),
                     selected: isSelected,
                     onSelected: (selected) {
-                      if (selected) setState(() => _paymentMethod = method);
+                      if (selected)
+                        setState(() => _paymentMethod = method);
                     },
-                    selectedColor: _GC.green.withValues(alpha: 0.2),
-                    backgroundColor: _GC.card,
+                    selectedColor: _GC.green.withValues(alpha: 0.15),
+                    backgroundColor: _GC.surface(context),
                     labelStyle: TextStyle(
-                      color: isSelected ? _GC.green : _GC.textSec,
+                      color: isSelected
+                          ? _GC.green
+                          : _GC.textSec(context),
                       fontWeight: FontWeight.w800,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
-                        color: isSelected ? _GC.green : Colors.transparent,
-                      ),
+                          color: isSelected
+                              ? _GC.green
+                              : Colors.transparent),
                     ),
                   );
                 }).toList(),
@@ -1589,23 +1658,24 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: _GC.card,
+                  color: _GC.surface(context),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: _GC.green.withValues(alpha: 0.3)),
+                  border: Border.all(
+                      color: _GC.green.withValues(alpha: 0.3)),
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Send payment to',
                       style: TextStyle(
-                        color: _GC.textSec,
+                        color: _GC.textSec(context),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    SizedBox(height: 4),
-                    Text(
+                    const SizedBox(height: 4),
+                    const Text(
                       '01797859806',
                       style: TextStyle(
                         color: _GC.green,
@@ -1619,73 +1689,40 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _trxIdController,
-                style: const TextStyle(color: _GC.textDark),
-                decoration: InputDecoration(
-                  labelText: 'Transaction ID',
-                  labelStyle: const TextStyle(color: _GC.textSec),
-                  filled: true,
-                  fillColor: _GC.card,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                validator: (value) => value == null || value.trim().isEmpty
+                style: TextStyle(color: _GC.textPrimary(context)),
+                decoration: _fieldDecor('Transaction ID'),
+                validator: (value) =>
+                value == null || value.trim().isEmpty
                     ? 'Please enter transaction ID'
                     : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _nameController,
-                style: const TextStyle(color: _GC.textDark),
-                decoration: InputDecoration(
-                  labelText: 'Full Name',
-                  labelStyle: const TextStyle(color: _GC.textSec),
-                  filled: true,
-                  fillColor: _GC.card,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
+                style: TextStyle(color: _GC.textPrimary(context)),
+                decoration: _fieldDecor('Full Name'),
                 validator: (value) =>
-                    value!.isEmpty ? 'Please enter your name' : null,
+                value!.isEmpty ? 'Please enter your name' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _phoneController,
-                style: const TextStyle(color: _GC.textDark),
+                style: TextStyle(color: _GC.textPrimary(context)),
                 keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: 'Phone Number',
-                  labelStyle: const TextStyle(color: _GC.textSec),
-                  filled: true,
-                  fillColor: _GC.card,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                validator: (value) =>
-                    value!.isEmpty ? 'Please enter your phone number' : null,
+                decoration: _fieldDecor('Phone Number'),
+                validator: (value) => value!.isEmpty
+                    ? 'Please enter your phone number'
+                    : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _addressController,
-                style: const TextStyle(color: _GC.textDark),
+                style: TextStyle(color: _GC.textPrimary(context)),
                 maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: 'Delivery Address',
-                  labelStyle: const TextStyle(color: _GC.textSec),
-                  filled: true,
-                  fillColor: _GC.card,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                validator: (value) =>
-                    value!.isEmpty ? 'Please enter your address' : null,
+                decoration: _fieldDecor('Delivery Address'),
+                validator: (value) => value!.isEmpty
+                    ? 'Please enter your address'
+                    : null,
               ),
               const SizedBox(height: 32),
               SizedBox(
@@ -1702,7 +1739,9 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
                     elevation: 0,
                   ),
                   child: Text(
-                    _isSubmitting ? 'Placing Order...' : 'Place Order',
+                    _isSubmitting
+                        ? 'Placing Order...'
+                        : 'Place Order',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,

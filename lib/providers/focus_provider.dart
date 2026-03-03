@@ -10,85 +10,64 @@ import 'package:monojog/services/history_service.dart';
 
 /// Unified focus intensity levels
 enum FocusLevel {
-  light, // 1 - DND only: silence all notifications
+  light,    // 1 - DND only: silence all notifications
   moderate, // 2 - Block reels/ads in social media + block selected apps
-  deep, // 3 - Block ALL installed apps
-  strict, // 4 - Block everything + cannot quit + only emergency calls
+  deep,     // 3 - Block ALL installed apps
+  strict,   // 4 - Block everything + cannot quit + only emergency calls
 }
 
 extension FocusLevelX on FocusLevel {
   String get label {
     switch (this) {
-      case FocusLevel.light:
-        return 'Light Focus';
-      case FocusLevel.moderate:
-        return 'Focused';
-      case FocusLevel.deep:
-        return 'Deep Focus';
-      case FocusLevel.strict:
-        return 'Strict Mode';
+      case FocusLevel.light:    return 'Light Focus';
+      case FocusLevel.moderate: return 'Focused';
+      case FocusLevel.deep:     return 'Deep Focus';
+      case FocusLevel.strict:   return 'Strict Mode';
     }
   }
 
   String get subtitle {
     switch (this) {
-      case FocusLevel.light:
-        return 'Silence all notifications';
-      case FocusLevel.moderate:
-        return 'Block distracting apps & reels';
-      case FocusLevel.deep:
-        return 'Block every app on your phone';
-      case FocusLevel.strict:
-        return 'Locked in � only emergencies';
+      case FocusLevel.light:    return 'Silence all notifications';
+      case FocusLevel.moderate: return 'Block distracting apps & reels';
+      case FocusLevel.deep:     return 'Block every app on your phone';
+      case FocusLevel.strict:   return 'Locked in — only emergencies';
     }
   }
 
   String get emoji {
     switch (this) {
-      case FocusLevel.light:
-        return '??';
-      case FocusLevel.moderate:
-        return '???';
-      case FocusLevel.deep:
-        return '??';
-      case FocusLevel.strict:
-        return '?';
+      case FocusLevel.light:    return '🔔';
+      case FocusLevel.moderate: return '🛡️';
+      case FocusLevel.deep:     return '🔒';
+      case FocusLevel.strict:   return '⛔';
     }
   }
 
   Color get color {
     switch (this) {
-      case FocusLevel.light:
-        return const Color(0xFF7C4DFF);
-      case FocusLevel.moderate:
-        return const Color(0xFF00E5FF);
-      case FocusLevel.deep:
-        return const Color(0xFFFF6B35);
-      case FocusLevel.strict:
-        return const Color(0xFFFF4D6D);
+      case FocusLevel.light:    return const Color(0xFF7C4DFF);
+      case FocusLevel.moderate: return const Color(0xFF00E5FF);
+      case FocusLevel.deep:     return const Color(0xFFFF6B35);
+      case FocusLevel.strict:   return const Color(0xFFFF4D6D);
     }
   }
 
   IconData get icon {
     switch (this) {
-      case FocusLevel.light:
-        return Icons.notifications_off_rounded;
-      case FocusLevel.moderate:
-        return Icons.shield_rounded;
-      case FocusLevel.deep:
-        return Icons.lock_rounded;
-      case FocusLevel.strict:
-        return Icons.block_rounded;
+      case FocusLevel.light:    return Icons.notifications_off_rounded;
+      case FocusLevel.moderate: return Icons.shield_rounded;
+      case FocusLevel.deep:     return Icons.lock_rounded;
+      case FocusLevel.strict:   return Icons.block_rounded;
     }
   }
 
-  /// What the level does (shown as bullet list)
   List<String> get features {
     switch (this) {
       case FocusLevel.light:
         return [
           'Turn off all notifications (DND)',
-          'No app blocking � honor system',
+          'No app blocking — honor system',
           'Can stop session anytime',
         ];
       case FocusLevel.moderate:
@@ -101,7 +80,7 @@ extension FocusLevelX on FocusLevel {
       case FocusLevel.deep:
         return [
           'Do Not Disturb enabled',
-          'ALL apps blocked � only Monojog runs',
+          'ALL apps blocked — only Monojog runs',
           'Full-screen overlay on any blocked app',
           'Can stop session anytime',
         ];
@@ -137,6 +116,9 @@ class FocusProvider with ChangeNotifier {
   bool _showBreathing = true;
   bool _allowEmergencyCalls = true;
 
+  // -- DND: user এর উপর নির্ভর --
+  bool _enableDND = true;
+
   int _pomodoroCount = 0;
   int _shortBreakMinutes = 5;
   int _longBreakMinutes = 15;
@@ -166,11 +148,13 @@ class FocusProvider with ChangeNotifier {
   bool get showBreathing => _showBreathing;
   bool get allowEmergencyCalls => _allowEmergencyCalls;
 
+  // ── DND getter: এখন user controllable ──
+  bool get enableDND => _enableDND;
+
   // Derived from focus level
   bool get isStrictMode => _focusLevel == FocusLevel.strict;
   bool get blockAllApps =>
       _focusLevel == FocusLevel.deep || _focusLevel == FocusLevel.strict;
-  bool get enableDND => true; // all levels enable DND
 
   int get pomodoroCount => _pomodoroCount;
   int get breakMinutes => _shortBreakMinutes;
@@ -186,7 +170,7 @@ class FocusProvider with ChangeNotifier {
   bool get isSessionRunning => _isFocusActive || _isOnBreak;
 
   /// Global session type currently active (for cross-provider sync)
-  static String? _globalActiveSession; // 'focus', 'sleep', 'study_room'
+  static String? _globalActiveSession;
   static String? get globalActiveSession => _globalActiveSession;
   static bool get isAnySessionActive => _globalActiveSession != null;
   static void claimSession(String type) => _globalActiveSession = type;
@@ -233,6 +217,13 @@ class FocusProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // ── DND setter: এখন user on/off করতে পারবে ──
+  void setEnableDND(bool v) {
+    _enableDND = v;
+    _saveSettings();
+    notifyListeners();
+  }
+
   void setTargetMinutes(int minutes) {
     _targetMinutes = minutes.clamp(1, 1440);
     _remainingSeconds = minutes * 60;
@@ -253,12 +244,11 @@ class FocusProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // -- Backward compat stubs -- (referenced elsewhere)
+  // -- Backward compat stubs --
   void setStrictMode(bool v) =>
       setFocusLevel(v ? FocusLevel.strict : FocusLevel.moderate);
   void setBlockAllApps(bool v) =>
       setFocusLevel(v ? FocusLevel.deep : FocusLevel.moderate);
-  void setEnableDND(bool v) {} // always on
   void setBreakMinutes(int v) => setShortBreakMinutes(v);
 
   FocusProvider() {
@@ -324,7 +314,6 @@ class FocusProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // -- App Blocking: Fixed toggle logic --
   Future<void> addBlockedApp(InstalledApp app) async {
     final existing = _blockedApps.any((b) => b.packageName == app.packageName);
     if (existing) {
@@ -355,19 +344,16 @@ class FocusProvider with ChangeNotifier {
     await _loadBlockedApps();
   }
 
-  /// Build the list of apps to block based on focus level
   List<String> _resolveBlockedApps() {
     switch (_focusLevel) {
       case FocusLevel.light:
-        return []; // no apps blocked
+        return [];
 
       case FocusLevel.moderate:
-        // Block user-selected apps + social media (FB, YT, etc.)
         final userApps = _blockedApps
             .where((app) => app.isBlocked)
             .map((app) => app.packageName)
             .toList();
-        // Add social media by default for moderate level
         const socialMediaPkgs = [
           'com.facebook.katana',
           'com.facebook.lite',
@@ -391,24 +377,19 @@ class FocusProvider with ChangeNotifier {
     }
   }
 
-  /// Start a focus session. Returns false if a session is already running.
   Future<bool> startFocusSession() async {
     if (_isFocusActive || _isOnBreak) {
-      debugPrint(
-          '[FocusProvider] Session already active, refusing to start another.');
+      debugPrint('[FocusProvider] Session already active.');
       return false;
     }
-    // Cross-provider sync: block if another session type is active
     if (isAnySessionActive) {
-      debugPrint(
-          '[FocusProvider] Another session ($globalActiveSession) is active.');
+      debugPrint('[FocusProvider] Another session ($globalActiveSession) is active.');
       return false;
     }
     claimSession('focus');
 
     final now = DateTime.now();
     final today = now.toIso8601String().split('T')[0];
-
     final activeBlockedApps = _resolveBlockedApps();
 
     _currentFocusSession = FocusSession(
@@ -427,7 +408,6 @@ class FocusProvider with ChangeNotifier {
     _lastActivityTime = DateTime.now();
     _appInBackground = false;
 
-    // Start app blocking service (for moderate/deep/strict)
     if (activeBlockedApps.isNotEmpty) {
       try {
         await platform.invokeMethod('startFocusMode', {
@@ -439,26 +419,24 @@ class FocusProvider with ChangeNotifier {
       }
     }
 
-    // Enable DND (all levels)
-    try {
-      await platform.invokeMethod('enableDND');
-    } on PlatformException catch (e) {
-      debugPrint('Failed to enable DND: ${e.message}');
+    // ── DND: user এর setting অনুযায়ী চালু করো ──
+    if (_enableDND) {
+      try {
+        await platform.invokeMethod('enableDND');
+      } on PlatformException catch (e) {
+        debugPrint('Failed to enable DND: ${e.message}');
+      }
     }
 
-    // Save to database
     await _db.insertFocusSession(_currentFocusSession!.toMap());
 
-    // Start countdown timer
     _focusTimer?.cancel();
     _focusTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_isPaused) return;
       if (_focusLevel == FocusLevel.strict) _checkIdle();
       if (_remainingSeconds > 0) {
         _remainingSeconds--;
-        if (_remainingSeconds % 30 == 0) {
-          _syncAndroidWidget();
-        }
+        if (_remainingSeconds % 30 == 0) _syncAndroidWidget();
         notifyListeners();
       } else {
         completeFocusSession();
@@ -485,24 +463,24 @@ class FocusProvider with ChangeNotifier {
       isCompleted: true,
     );
 
-    // Stop app blocking service
     try {
       await platform.invokeMethod('stopFocusMode');
     } on PlatformException catch (e) {
       debugPrint('Failed to stop focus mode: ${e.message}');
     }
 
-    // Disable DND
-    try {
-      await platform.invokeMethod('disableDND');
-    } on PlatformException catch (e) {
-      debugPrint('Failed to disable DND: ${e.message}');
+    // ── DND: user এর setting অনুযায়ী বন্ধ করো ──
+    if (_enableDND) {
+      try {
+        await platform.invokeMethod('disableDND');
+      } on PlatformException catch (e) {
+        debugPrint('Failed to disable DND: ${e.message}');
+      }
     }
 
     await _db.updateFocusSession(completedSession.id, completedSession.toMap());
     await _updateDailyFocusStats(actualMinutes);
 
-    // Log to history
     try {
       await HistoryService.instance.logEvent(
         'focus_session',
@@ -516,6 +494,7 @@ class FocusProvider with ChangeNotifier {
           'target_minutes': _targetMinutes,
           'penalty_seconds': _totalPenaltySeconds,
           'pomodoro_count': _pomodoroCount + 1,
+          'dnd_enabled': _enableDND,
         },
       );
     } catch (_) {}
@@ -529,12 +508,10 @@ class FocusProvider with ChangeNotifier {
     releaseSession('focus');
 
     final breakDuration =
-        _sessionsSinceLongBreak >= 4 ? _longBreakMinutes : _shortBreakMinutes;
-    if (_sessionsSinceLongBreak >= 4) {
-      _sessionsSinceLongBreak = 0;
-    }
-    await startBreak(durationMinutes: breakDuration);
+    _sessionsSinceLongBreak >= 4 ? _longBreakMinutes : _shortBreakMinutes;
+    if (_sessionsSinceLongBreak >= 4) _sessionsSinceLongBreak = 0;
 
+    await startBreak(durationMinutes: breakDuration);
     await _syncAndroidWidget();
     notifyListeners();
   }
@@ -549,9 +526,7 @@ class FocusProvider with ChangeNotifier {
     _focusTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingSeconds > 0) {
         _remainingSeconds--;
-        if (_remainingSeconds % 30 == 0) {
-          _syncAndroidWidget();
-        }
+        if (_remainingSeconds % 30 == 0) _syncAndroidWidget();
         notifyListeners();
       } else {
         _focusTimer?.cancel();
@@ -592,26 +567,25 @@ class FocusProvider with ChangeNotifier {
       debugPrint('Failed to stop focus mode: ${e.message}');
     }
 
-    try {
-      await platform.invokeMethod('disableDND');
-    } on PlatformException catch (e) {
-      debugPrint('Failed to disable DND: ${e.message}');
+    // ── DND: user এর setting অনুযায়ী বন্ধ করো ──
+    if (_enableDND) {
+      try {
+        await platform.invokeMethod('disableDND');
+      } on PlatformException catch (e) {
+        debugPrint('Failed to disable DND: ${e.message}');
+      }
     }
 
     if (_currentFocusSession != null) {
       final now = DateTime.now();
       final actualMinutes = _targetMinutes - (_remainingSeconds ~/ 60);
-
       final cancelledSession = _currentFocusSession!.copyWith(
         endTime: now,
         actualDurationMinutes: actualMinutes,
         isCompleted: false,
       );
-
       await _db.updateFocusSession(
-        cancelledSession.id,
-        cancelledSession.toMap(),
-      );
+          cancelledSession.id, cancelledSession.toMap());
     }
 
     _isFocusActive = false;
@@ -627,7 +601,7 @@ class FocusProvider with ChangeNotifier {
 
   void pauseFocusSession() {
     if (!_isFocusActive || _isPaused) return;
-    if (isStrictMode) return; // strict mode: no pause allowed
+    if (isStrictMode) return;
     _isPaused = true;
     _syncAndroidWidget();
     notifyListeners();
@@ -640,14 +614,12 @@ class FocusProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Anti-cheat
   void reportActivity() {
     _lastActivityTime = DateTime.now();
   }
 
   void onAppLifecycleChanged(bool isResumed) {
     if (!_isFocusActive || _isOnBreak) return;
-
     if (!isResumed) {
       _appInBackground = true;
       if (_focusLevel == FocusLevel.strict || _focusLevel == FocusLevel.deep) {
@@ -665,14 +637,13 @@ class FocusProvider with ChangeNotifier {
         (_remainingSeconds - seconds).clamp(0, _targetMinutes * 60);
     debugPrint(
         '[AntiCheat] Penalty $seconds s ($reason). Total: $_totalPenaltySeconds s');
-    if (_remainingSeconds <= 0) {
-      completeFocusSession();
-    }
+    if (_remainingSeconds <= 0) completeFocusSession();
   }
 
   void _checkIdle() {
     if (_lastActivityTime == null) return;
-    final idleSeconds = DateTime.now().difference(_lastActivityTime!).inSeconds;
+    final idleSeconds =
+        DateTime.now().difference(_lastActivityTime!).inSeconds;
     if (idleSeconds >= _idleThresholdSeconds) {
       _applyPenalty(_idlePenaltySeconds, 'idle');
       _lastActivityTime = DateTime.now();
@@ -689,7 +660,7 @@ class FocusProvider with ChangeNotifier {
         'date': today,
         'total_study_minutes': existingStats['total_study_minutes'],
         'total_focus_minutes':
-            (existingStats['total_focus_minutes'] as int) + focusMinutes,
+        (existingStats['total_focus_minutes'] as int) + focusMinutes,
         'sessions_completed': existingStats['sessions_completed'],
         'streak_days': existingStats['streak_days'],
       });
@@ -709,11 +680,15 @@ class FocusProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final levelIdx = prefs.getInt('focus.level') ?? FocusLevel.moderate.index;
     _focusLevel =
-        FocusLevel.values[levelIdx.clamp(0, FocusLevel.values.length - 1)];
-    _showBreathing = prefs.getBool('focus.show_breathing') ?? _showBreathing;
+    FocusLevel.values[levelIdx.clamp(0, FocusLevel.values.length - 1)];
+    _showBreathing =
+        prefs.getBool('focus.show_breathing') ?? _showBreathing;
     _allowEmergencyCalls =
         prefs.getBool('focus.allow_emergency_calls') ?? _allowEmergencyCalls;
-    _targetMinutes = prefs.getInt('focus.target_minutes') ?? _targetMinutes;
+    // ── DND load ──
+    _enableDND = prefs.getBool('focus.enable_dnd') ?? true;
+    _targetMinutes =
+        prefs.getInt('focus.target_minutes') ?? _targetMinutes;
     _shortBreakMinutes =
         prefs.getInt('focus.short_break_minutes') ?? _shortBreakMinutes;
     _longBreakMinutes =
@@ -728,6 +703,8 @@ class FocusProvider with ChangeNotifier {
     await prefs.setInt('focus.level', _focusLevel.index);
     await prefs.setBool('focus.show_breathing', _showBreathing);
     await prefs.setBool('focus.allow_emergency_calls', _allowEmergencyCalls);
+    // ── DND save ──
+    await prefs.setBool('focus.enable_dnd', _enableDND);
     await prefs.setInt('focus.target_minutes', _targetMinutes);
     await prefs.setInt('focus.short_break_minutes', _shortBreakMinutes);
     await prefs.setInt('focus.long_break_minutes', _longBreakMinutes);

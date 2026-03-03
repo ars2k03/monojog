@@ -9,17 +9,61 @@ import 'package:monojog/theme/app_theme.dart';
 import 'package:monojog/widgets/neu_container.dart';
 import 'package:monojog/screens/sleep_insights_screen.dart';
 
+/// Adaptive color palette — works for both light and dark mode.
 class _SC {
-  static const mint = Color(0xFF66FFCC);
-  static const mintDark = Color(0xFF00CC99);
+  // Brand / accent colors (same in both modes, vivid enough for both)
+  static const mint = Color(0xFF00BFA5);
+  static const mintDark = Color(0xFF00897B);
   static const purple = Color(0xFF7C4DFF);
-  static const moonYellow = Color(0xFFFFF3B0);
-  static const rem = Color(0xFFFF6B6B);
-  static const core = Color(0xFF4ECDC4);
-  static const deep = Color(0xFF7C4DFF);
-  static const light = Color(0xFFFEE440);
-  static const card = Color(0xFF1A1C3A);
-  static const textSec = Color(0xFF8B8FA3);
+  static const moonYellow = Color(0xFFF9A825);
+  static const rem = Color(0xFFE53935);
+  static const core = Color(0xFF00897B);
+  static const deep = Color(0xFF512DA8);
+  static const light = Color(0xFFF9A825);
+
+  // ── Semantic tokens resolved at runtime ──────────────────────────────────
+  static Color bg(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? const Color(0xFF0D0F1E)
+          : const Color(0xFFF0F4F8);
+
+  static Color card(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? const Color(0xFF1A1C3A)
+          : const Color(0xFFFFFFFF);
+
+  static Color cardAlt(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? const Color(0xFF252848)
+          : const Color(0xFFE8EEF5);
+
+  static Color textPrimary(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? Colors.white
+          : const Color(0xFF0D1117);
+
+  static Color textSec(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? const Color(0xFF8B8FA3)
+          : const Color(0xFF5A6070);
+
+  static Color border(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? Colors.white.withValues(alpha: 0.08)
+          : Colors.black.withValues(alpha: 0.08);
+
+  static Color surface(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? Colors.white.withValues(alpha: 0.04)
+          : Colors.black.withValues(alpha: 0.04);
+
+  static Color inputFill(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? const Color(0xFF0D0F1E)
+          : const Color(0xFFF0F4F8);
+
+  static bool isDark(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark;
 }
 
 class SleepScreen extends StatefulWidget {
@@ -31,7 +75,7 @@ class SleepScreen extends StatefulWidget {
 class _SleepScreenState extends State<SleepScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
-  int _viewMode = 0; // 0=main, 1=analysis
+  int _viewMode = 0; // 0=main, 1=analysis, 2=dreams
   final AudioPlayer _audioPlayer = AudioPlayer();
   String? _playingRecordingId;
 
@@ -56,7 +100,7 @@ class _SleepScreenState extends State<SleepScreen>
     return Consumer<SleepProvider>(
       builder: (ctx, sleep, _) {
         return Scaffold(
-          backgroundColor: AppTheme.darkBg,
+          backgroundColor: _SC.bg(context),
           body: SafeArea(
             child: sleep.isSleeping
                 ? _buildSleepingView(sleep)
@@ -67,6 +111,9 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // IDLE VIEW
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildIdleView(SleepProvider sleep) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -112,6 +159,9 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // HEADER
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildHeader(SleepProvider sleep) {
     return Row(
       children: [
@@ -120,19 +170,19 @@ class _SleepScreenState extends State<SleepScreen>
           children: [
             Text(
               _getGreeting(),
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: _SC.textSec,
+                  color: _SC.textSec(context),
                   letterSpacing: 0.5),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Sleep Tracker',
               style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: _SC.textPrimary(context),
                   letterSpacing: -0.5),
             ),
           ],
@@ -141,11 +191,23 @@ class _SleepScreenState extends State<SleepScreen>
         GestureDetector(
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const SleepInsightsScreen())),
-          child: const NeuContainer(
+          child: Container(
             width: 44,
             height: 44,
-            shape: BoxShape.circle,
-            child: Icon(Icons.insights_rounded, color: _SC.mint, size: 22),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _SC.card(context),
+              boxShadow: _SC.isDark(context)
+                  ? null
+                  : [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2))
+              ],
+            ),
+            child:
+            const Icon(Icons.insights_rounded, color: _SC.mint, size: 22),
           ),
         ),
       ],
@@ -160,13 +222,13 @@ class _SleepScreenState extends State<SleepScreen>
     return 'Good Evening';
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // VIEW TOGGLE
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildViewToggle() {
     return Container(
       height: 44,
-      decoration: BoxDecoration(
-        color: _SC.card,
-        borderRadius: BorderRadius.circular(14),
-      ),
+      decoration: null,
       child: Row(
         children: [
           _viewTab('Sleep', Icons.nightlight_round, 0),
@@ -180,53 +242,52 @@ class _SleepScreenState extends State<SleepScreen>
   Widget _viewTab(String label, IconData icon, int idx) {
     final sel = _viewMode == idx;
     return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _viewMode = idx),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            color: sel ? _SC.mint.withValues(alpha: 0.15) : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 16, color: sel ? _SC.mint : _SC.textSec),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  color: sel ? _SC.mint : _SC.textSec,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ],
+      child: OutlinedButton.icon(
+        onPressed: () => setState(() => _viewMode = idx),
+        icon: Icon(icon,
+            size: 16, color: sel ? _SC.mint : _SC.textSec(context)),
+        label: Text(
+          label,
+          style: TextStyle(
+            color: sel ? _SC.mint : _SC.textSec(context),
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
           ),
         ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(
+              color: sel ? _SC.mint : _SC.border(context), width: 1.5),
+          backgroundColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        )
       ),
     );
   }
 
-  // -- Schedule Card: Bedtime & Wake-up time --
+  // ─────────────────────────────────────────────────────────────────────────
+  // SCHEDULE CARD
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildScheduleCard(SleepProvider sleep) {
-    return NeuContainer(
-      padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(24),
+    return _adaptiveCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Sleep Schedule',
             style: TextStyle(
-                color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
+                color: _SC.textPrimary(context),
+                fontWeight: FontWeight.w800,
+                fontSize: 16),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Set your bedtime and wake-up alarm',
             style: TextStyle(
-                color: _SC.textSec, fontSize: 12, fontWeight: FontWeight.w500),
+                color: _SC.textSec(context),
+                fontSize: 12,
+                fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 16),
           Row(
@@ -243,9 +304,7 @@ class _SleepScreenState extends State<SleepScreen>
                       initialTime: sleep.bedtimeGoal ??
                           const TimeOfDay(hour: 23, minute: 0),
                       builder: (c, child) => Theme(
-                        data: ThemeData.dark().copyWith(
-                            colorScheme: const ColorScheme.dark(
-                                primary: _SC.mint, surface: _SC.card)),
+                        data: _timePickerTheme(c),
                         child: child!,
                       ),
                     );
@@ -266,9 +325,7 @@ class _SleepScreenState extends State<SleepScreen>
                       initialTime: sleep.wakeUpTime ??
                           const TimeOfDay(hour: 7, minute: 0),
                       builder: (c, child) => Theme(
-                        data: ThemeData.dark().copyWith(
-                            colorScheme: const ColorScheme.dark(
-                                primary: _SC.mint, surface: _SC.card)),
+                        data: _timePickerTheme(c),
                         child: child!,
                       ),
                     );
@@ -279,79 +336,34 @@ class _SleepScreenState extends State<SleepScreen>
             ],
           ),
           const SizedBox(height: 14),
-          // Alarm toggle
-          Row(
-            children: [
-              Icon(Icons.alarm_rounded,
-                  color: sleep.alarmEnabled ? _SC.mint : _SC.textSec, size: 20),
-              const SizedBox(width: 10),
-              Text(
-                'Wake-up alarm',
-                style: TextStyle(
-                  color: sleep.alarmEnabled ? Colors.white : _SC.textSec,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                ),
-              ),
-              const Spacer(),
-              Switch(
-                value: sleep.alarmEnabled,
-                onChanged: (v) => sleep.setAlarmEnabled(v),
-                activeTrackColor: _SC.mint.withValues(alpha: 0.4),
-                activeThumbColor: _SC.mint,
-              ),
-            ],
+          _switchRow(
+            icon: Icons.alarm_rounded,
+            label: 'Wake-up alarm',
+            value: sleep.alarmEnabled,
+            activeColor: _SC.mint,
+            onChanged: (v) => sleep.setAlarmEnabled(v),
           ),
           const SizedBox(height: 10),
-          // App blocking during sleep toggle
-          Row(
-            children: [
-              Icon(Icons.block_rounded,
-                  color: sleep.sleepBlockEnabled ? _SC.rem : _SC.textSec,
-                  size: 20),
-              const SizedBox(width: 10),
-              Text(
-                'Block apps during sleep',
-                style: TextStyle(
-                  color: sleep.sleepBlockEnabled ? Colors.white : _SC.textSec,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                ),
-              ),
-              const Spacer(),
-              Switch(
-                value: sleep.sleepBlockEnabled,
-                onChanged: (v) => sleep.setSleepBlockEnabled(v),
-                activeTrackColor: _SC.rem.withValues(alpha: 0.4),
-                activeThumbColor: _SC.rem,
-              ),
-            ],
+          _switchRow(
+            icon: Icons.block_rounded,
+            label: 'Block apps during sleep',
+            value: sleep.sleepBlockEnabled,
+            activeColor: _SC.rem,
+            onChanged: (v) => sleep.setSleepBlockEnabled(v),
           ),
           if (sleep.sleepBlockEnabled) ...[
             const SizedBox(height: 8),
-            Row(
-              children: [
-                const SizedBox(width: 30),
-                Icon(Icons.shield_rounded,
-                    color: sleep.sleepBlockAll ? _SC.rem : _SC.textSec,
-                    size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  'Block ALL apps (strict)',
-                  style: TextStyle(
-                    color: sleep.sleepBlockAll ? Colors.white : _SC.textSec,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-                const Spacer(),
-                Switch(
-                  value: sleep.sleepBlockAll,
-                  onChanged: (v) => sleep.setSleepBlockAll(v),
-                  activeTrackColor: _SC.rem.withValues(alpha: 0.4),
-                  activeThumbColor: _SC.rem,
-                ),
-              ],
+            Padding(
+              padding: const EdgeInsets.only(left: 30),
+              child: _switchRow(
+                icon: Icons.shield_rounded,
+                label: 'Block ALL apps (strict)',
+                value: sleep.sleepBlockAll,
+                activeColor: _SC.rem,
+                onChanged: (v) => sleep.setSleepBlockAll(v),
+                iconSize: 18,
+                labelSize: 13,
+              ),
             ),
             if (!sleep.sleepBlockAll)
               Padding(
@@ -360,12 +372,56 @@ class _SleepScreenState extends State<SleepScreen>
                   sleep.sleepBlockedPackages.isEmpty
                       ? 'No custom apps selected. Use Focus screen to manage blocked apps.'
                       : '${sleep.sleepBlockedPackages.length} app(s) will be blocked',
-                  style: const TextStyle(color: _SC.textSec, fontSize: 11),
+                  style:
+                  TextStyle(color: _SC.textSec(context), fontSize: 11),
                 ),
               ),
           ],
         ],
       ),
+    );
+  }
+
+  ThemeData _timePickerTheme(BuildContext c) {
+    return _SC.isDark(c)
+        ? ThemeData.dark().copyWith(
+        colorScheme: const ColorScheme.dark(
+            primary: _SC.mint, surface: Color(0xFF1A1C3A)))
+        : ThemeData.light().copyWith(
+        colorScheme: const ColorScheme.light(
+            primary: _SC.mint, surface: Colors.white));
+  }
+
+  Widget _switchRow({
+    required IconData icon,
+    required String label,
+    required bool value,
+    required Color activeColor,
+    required ValueChanged<bool> onChanged,
+    double iconSize = 20,
+    double labelSize = 14,
+  }) {
+    return Row(
+      children: [
+        Icon(icon,
+            color: value ? activeColor : _SC.textSec(context), size: iconSize),
+        const SizedBox(width: 10),
+        Text(
+          label,
+          style: TextStyle(
+            color: value ? _SC.textPrimary(context) : _SC.textSec(context),
+            fontWeight: FontWeight.w700,
+            fontSize: labelSize,
+          ),
+        ),
+        const Spacer(),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeTrackColor: activeColor.withValues(alpha: 0.4),
+          activeThumbColor: activeColor,
+        ),
+      ],
     );
   }
 
@@ -381,9 +437,11 @@ class _SleepScreenState extends State<SleepScreen>
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
+          color: color.withValues(alpha: _SC.isDark(context) ? 0.08 : 0.06),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
+          border: Border.all(
+              color: color.withValues(
+                  alpha: _SC.isDark(context) ? 0.2 : 0.35)),
         ),
         child: Column(
           children: [
@@ -392,7 +450,7 @@ class _SleepScreenState extends State<SleepScreen>
             Text(
               time != null ? time.format(context) : 'Set',
               style: TextStyle(
-                color: time != null ? Colors.white : _SC.textSec,
+                color: time != null ? _SC.textPrimary(context) : _SC.textSec(context),
                 fontWeight: FontWeight.w900,
                 fontSize: 18,
               ),
@@ -400,7 +458,7 @@ class _SleepScreenState extends State<SleepScreen>
             const SizedBox(height: 2),
             Text(label,
                 style: TextStyle(
-                    color: color.withValues(alpha: 0.8),
+                    color: color,
                     fontWeight: FontWeight.w600,
                     fontSize: 12)),
           ],
@@ -409,17 +467,21 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // -- Countdown to bedtime --
+  // ─────────────────────────────────────────────────────────────────────────
+  // COUNTDOWN CARD
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildCountdownCard(SleepProvider sleep) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_SC.purple.withValues(alpha: 0.2), _SC.card],
-        ),
+        color: _SC.isDark(context)
+            ? _SC.purple.withValues(alpha: 0.2)
+            : _SC.purple.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _SC.purple.withValues(alpha: 0.2)),
+        border: Border.all(
+            color: _SC.purple.withValues(
+                alpha: _SC.isDark(context) ? 0.2 : 0.3)),
       ),
       child: Row(
         children: [
@@ -429,19 +491,19 @@ class _SleepScreenState extends State<SleepScreen>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Time until bedtime',
+              Text('Time until bedtime',
                   style: TextStyle(
-                      color: _SC.textSec,
+                      color: _SC.textSec(context),
                       fontSize: 12,
                       fontWeight: FontWeight.w600)),
               const SizedBox(height: 2),
               Text(
                 sleep.formattedCountdown,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: _SC.textPrimary(context),
                   fontWeight: FontWeight.w900,
                   fontSize: 24,
-                  fontFeatures: [FontFeature.tabularFigures()],
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ],
@@ -451,7 +513,9 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // -- Moon Card --
+  // ─────────────────────────────────────────────────────────────────────────
+  // MOON CARD (Start Sleep)
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildMoonCard(SleepProvider sleep) {
     return GestureDetector(
       onTap: () {
@@ -473,14 +537,28 @@ class _SleepScreenState extends State<SleepScreen>
           padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(28),
-            gradient: const LinearGradient(
+            gradient: _SC.isDark(context)
+                ? const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [Color(0xFF1A1C3A), Color(0xFF0D0F1E)],
+            )
+                : LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                _SC.mint.withValues(alpha: 0.12),
+                _SC.mint.withValues(alpha: 0.04),
+              ],
             ),
+            border: _SC.isDark(context)
+                ? null
+                : Border.all(
+                color: _SC.mint.withValues(alpha: 0.3), width: 1.5),
             boxShadow: [
               BoxShadow(
-                  color: _SC.mint.withValues(alpha: 0.1),
+                  color: _SC.mint.withValues(
+                      alpha: _SC.isDark(context) ? 0.1 : 0.15),
                   blurRadius: 30,
                   spreadRadius: -5,
                   offset: const Offset(0, 8)),
@@ -506,25 +584,25 @@ class _SleepScreenState extends State<SleepScreen>
                   ],
                 ),
                 child: const Icon(Icons.nightlight_round,
-                    color: Color(0xFF0D0F1E), size: 28),
+                    color: Colors.white, size: 28),
               ),
               const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Start Sleep',
+                    Text('Start Sleep',
                         style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
-                            color: Colors.white)),
+                            color: _SC.textPrimary(context))),
                     const SizedBox(height: 4),
                     Text(
                       'Target: ${sleep.targetHours}h • Tap to begin',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
-                          color: _SC.textSec),
+                          color: _SC.textSec(context)),
                     ),
                   ],
                 ),
@@ -538,7 +616,9 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // -- AI Suggestions --
+  // ─────────────────────────────────────────────────────────────────────────
+  // AI SUGGESTIONS
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildAiSuggestions(SleepProvider sleep) {
     final suggestions = sleep.aiSuggestions;
     if (suggestions.isEmpty) return const SizedBox.shrink();
@@ -546,14 +626,14 @@ class _SleepScreenState extends State<SleepScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           children: [
-            Icon(Icons.auto_awesome_rounded, color: _SC.mint, size: 18),
-            SizedBox(width: 8),
+            const Icon(Icons.auto_awesome_rounded, color: _SC.mint, size: 18),
+            const SizedBox(width: 8),
             Text(
               'Sleep Insights',
               style: TextStyle(
-                  color: Colors.white,
+                  color: _SC.textPrimary(context),
                   fontWeight: FontWeight.w800,
                   fontSize: 16),
             ),
@@ -589,9 +669,12 @@ class _SleepScreenState extends State<SleepScreen>
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: accentColor.withValues(alpha: 0.06),
+        color: accentColor.withValues(
+            alpha: _SC.isDark(context) ? 0.06 : 0.07),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accentColor.withValues(alpha: 0.15)),
+        border: Border.all(
+            color: accentColor.withValues(
+                alpha: _SC.isDark(context) ? 0.15 : 0.25)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -612,8 +695,8 @@ class _SleepScreenState extends State<SleepScreen>
                 const SizedBox(height: 4),
                 Text(
                   suggestion.description,
-                  style: const TextStyle(
-                      color: _SC.textSec, fontSize: 12, height: 1.4),
+                  style: TextStyle(
+                      color: _SC.textSec(context), fontSize: 12, height: 1.4),
                 ),
               ],
             ),
@@ -623,12 +706,12 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // -- Last Session Card --
+  // ─────────────────────────────────────────────────────────────────────────
+  // LAST SESSION CARD
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildLastSessionCard(SleepProvider sleep) {
     final session = sleep.lastSession!;
-    return NeuContainer(
-      padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(24),
+    return _adaptiveCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -637,10 +720,7 @@ class _SleepScreenState extends State<SleepScreen>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [
-                    _SC.mint.withValues(alpha: 0.2),
-                    _SC.mint.withValues(alpha: 0.05)
-                  ]),
+                  color: _SC.mint.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(Icons.bedtime_rounded,
@@ -650,14 +730,14 @@ class _SleepScreenState extends State<SleepScreen>
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Last Sleep',
+                  Text('Last Sleep',
                       style: TextStyle(
-                          color: Colors.white,
+                          color: _SC.textPrimary(context),
                           fontWeight: FontWeight.w800,
                           fontSize: 16)),
                   Text(session.date,
-                      style: const TextStyle(
-                          color: _SC.textSec,
+                      style: TextStyle(
+                          color: _SC.textSec(context),
                           fontSize: 12,
                           fontWeight: FontWeight.w500)),
                 ],
@@ -691,7 +771,7 @@ class _SleepScreenState extends State<SleepScreen>
     } else if (quality >= 70) {
       badgeColor = _SC.core;
     } else if (quality >= 50) {
-      badgeColor = _SC.light;
+      badgeColor = _SC.moonYellow;
     } else {
       badgeColor = _SC.rem;
     }
@@ -701,12 +781,14 @@ class _SleepScreenState extends State<SleepScreen>
       decoration: BoxDecoration(
         color: badgeColor.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(14),
-        border:
-            Border.all(color: badgeColor.withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(
+            color: badgeColor.withValues(alpha: 0.4), width: 1.5),
       ),
       child: Text('$quality%',
           style: TextStyle(
-              color: badgeColor, fontWeight: FontWeight.w900, fontSize: 16)),
+              color: badgeColor,
+              fontWeight: FontWeight.w900,
+              fontSize: 16)),
     );
   }
 
@@ -719,8 +801,8 @@ class _SleepScreenState extends State<SleepScreen>
                   color: color, fontWeight: FontWeight.w900, fontSize: 17)),
           const SizedBox(height: 4),
           Text(label,
-              style: const TextStyle(
-                  color: _SC.textSec,
+              style: TextStyle(
+                  color: _SC.textSec(context),
                   fontWeight: FontWeight.w600,
                   fontSize: 12)),
         ],
@@ -740,7 +822,7 @@ class _SleepScreenState extends State<SleepScreen>
             _stageSegment(session.deepHours / total, _SC.deep),
             _stageSegment(session.coreHours / total, _SC.core),
             _stageSegment(session.remHours / total, _SC.rem),
-            _stageSegment(session.lightHours / total, _SC.light),
+            _stageSegment(session.lightHours / total, _SC.moonYellow),
           ],
         ),
       ),
@@ -762,8 +844,8 @@ class _SleepScreenState extends State<SleepScreen>
         _legendItem(
             'Core', '${session.coreHours.toStringAsFixed(1)}h', _SC.core),
         _legendItem('REM', '${session.remHours.toStringAsFixed(1)}h', _SC.rem),
-        _legendItem(
-            'Light', '${session.lightHours.toStringAsFixed(1)}h', _SC.light),
+        _legendItem('Light', '${session.lightHours.toStringAsFixed(1)}h',
+            _SC.moonYellow),
       ],
     );
   }
@@ -781,13 +863,13 @@ class _SleepScreenState extends State<SleepScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(value,
-                style: const TextStyle(
-                    color: Colors.white,
+                style: TextStyle(
+                    color: _SC.textPrimary(context),
                     fontWeight: FontWeight.w800,
                     fontSize: 13)),
             Text(label,
-                style: const TextStyle(
-                    color: _SC.textSec,
+                style: TextStyle(
+                    color: _SC.textSec(context),
                     fontWeight: FontWeight.w500,
                     fontSize: 10)),
           ],
@@ -796,22 +878,23 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // -- Target Selector --
+  // ─────────────────────────────────────────────────────────────────────────
+  // TARGET SELECTOR
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildTargetSelector(SleepProvider sleep) {
-    return NeuContainer(
-      padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(24),
+    return _adaptiveCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Sleep Target',
+          Text('Sleep Target',
               style: TextStyle(
-                  color: Colors.white,
+                  color: _SC.textPrimary(context),
                   fontWeight: FontWeight.w800,
                   fontSize: 16)),
           const SizedBox(height: 4),
-          const Text('Set your ideal sleep duration',
-              style: TextStyle(color: _SC.textSec, fontSize: 13)),
+          Text('Set your ideal sleep duration',
+              style:
+              TextStyle(color: _SC.textSec(context), fontSize: 13)),
           const SizedBox(height: 16),
           Row(
             children: List.generate(9, (i) {
@@ -826,13 +909,13 @@ class _SleepScreenState extends State<SleepScreen>
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? _SC.mint.withValues(alpha: 0.2)
+                          ? _SC.mint.withValues(alpha: 0.15)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected
                             ? _SC.mint
-                            : Colors.white.withValues(alpha: 0.1),
+                            : _SC.border(context),
                         width: isSelected ? 1.5 : 1,
                       ),
                     ),
@@ -840,9 +923,12 @@ class _SleepScreenState extends State<SleepScreen>
                       child: Text(
                         '$hours',
                         style: TextStyle(
-                          color: isSelected ? _SC.mint : _SC.textSec,
-                          fontWeight:
-                              isSelected ? FontWeight.w800 : FontWeight.w500,
+                          color: isSelected
+                              ? _SC.mint
+                              : _SC.textSec(context),
+                          fontWeight: isSelected
+                              ? FontWeight.w800
+                              : FontWeight.w500,
                           fontSize: 13,
                         ),
                       ),
@@ -857,11 +943,11 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // ── Sound Recording Toggle Card ──
+  // ─────────────────────────────────────────────────────────────────────────
+  // RECORDING TOGGLE CARD
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildRecordingToggleCard(SleepProvider sleep) {
-    return NeuContainer(
-      padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(24),
+    return _adaptiveCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -870,31 +956,28 @@ class _SleepScreenState extends State<SleepScreen>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [
-                    _SC.purple.withValues(alpha: 0.2),
-                    _SC.purple.withValues(alpha: 0.05)
-                  ]),
+                  color: _SC.purple.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child:
-                    const Icon(Icons.mic_rounded, color: _SC.purple, size: 24),
+                child: const Icon(Icons.mic_rounded,
+                    color: _SC.purple, size: 24),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Sleep Recorder',
                       style: TextStyle(
-                          color: Colors.white,
+                          color: _SC.textPrimary(context),
                           fontWeight: FontWeight.w800,
                           fontSize: 16),
                     ),
                     Text(
                       'Record sounds while you sleep',
                       style: TextStyle(
-                          color: _SC.textSec,
+                          color: _SC.textSec(context),
                           fontSize: 12,
                           fontWeight: FontWeight.w500),
                     ),
@@ -911,10 +994,10 @@ class _SleepScreenState extends State<SleepScreen>
           ),
           if (sleep.recordingEnabled) ...[
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Sensitivity',
               style: TextStyle(
-                  color: _SC.textSec,
+                  color: _SC.textSec(context),
                   fontWeight: FontWeight.w700,
                   fontSize: 12),
             ),
@@ -929,7 +1012,8 @@ class _SleepScreenState extends State<SleepScreen>
                     max: 60,
                     divisions: 8,
                     activeColor: _SC.purple,
-                    inactiveColor: Colors.white.withValues(alpha: 0.08),
+                    inactiveColor:
+                    _SC.isDark(context) ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.1),
                     onChanged: (v) => sleep.setSilenceThreshold(v),
                   ),
                 ),
@@ -939,8 +1023,8 @@ class _SleepScreenState extends State<SleepScreen>
             Center(
               child: Text(
                 '${sleep.silenceThreshold.round()} dB threshold',
-                style: const TextStyle(
-                    color: _SC.textSec,
+                style: TextStyle(
+                    color: _SC.textSec(context),
                     fontSize: 11,
                     fontWeight: FontWeight.w500),
               ),
@@ -949,19 +1033,23 @@ class _SleepScreenState extends State<SleepScreen>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: _SC.purple.withValues(alpha: 0.06),
+                color: _SC.purple.withValues(
+                    alpha: _SC.isDark(context) ? 0.06 : 0.07),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _SC.purple.withValues(alpha: 0.1)),
+                border: Border.all(
+                    color: _SC.purple.withValues(
+                        alpha: _SC.isDark(context) ? 0.1 : 0.2)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.info_outline_rounded, color: _SC.purple, size: 16),
-                  SizedBox(width: 10),
+                  const Icon(Icons.info_outline_rounded,
+                      color: _SC.purple, size: 16),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Detects snoring, talking, and noise during sleep. Recordings stored locally on device.',
                       style: TextStyle(
-                        color: _SC.textSec,
+                        color: _SC.textSec(context),
                         fontSize: 11,
                         height: 1.4,
                       ),
@@ -976,19 +1064,21 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // ── Sleep Debt & Consistency Card ──
+  // ─────────────────────────────────────────────────────────────────────────
+  // SLEEP DEBT CARD
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildSleepDebtCard(SleepProvider sleep) {
     final debt = sleep.sleepDebt;
     final consistency = sleep.consistencyScore;
     final debtColor =
-        debt <= 2.0 ? _SC.mint : (debt <= 5.0 ? _SC.moonYellow : _SC.rem);
+    debt <= 2.0 ? _SC.mint : (debt <= 5.0 ? _SC.moonYellow : _SC.rem);
     final consistColor =
-        consistency >= 80 ? _SC.mint : (consistency >= 50 ? _SC.core : _SC.rem);
+    consistency >= 80 ? _SC.mint : (consistency >= 50 ? _SC.core : _SC.rem);
 
     return Row(
       children: [
         Expanded(
-          child: NeuContainer(
+          child: _adaptiveCard(
             padding: const EdgeInsets.all(16),
             borderRadius: BorderRadius.circular(20),
             child: Column(
@@ -998,16 +1088,15 @@ class _SleepScreenState extends State<SleepScreen>
                 Text(
                   '${debt}h',
                   style: TextStyle(
-                    color: debtColor,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 22,
-                  ),
+                      color: debtColor,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 22),
                 ),
                 const SizedBox(height: 2),
-                const Text(
+                Text(
                   'Sleep Debt',
                   style: TextStyle(
-                      color: _SC.textSec,
+                      color: _SC.textSec(context),
                       fontSize: 11,
                       fontWeight: FontWeight.w600),
                 ),
@@ -1027,7 +1116,7 @@ class _SleepScreenState extends State<SleepScreen>
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: NeuContainer(
+          child: _adaptiveCard(
             padding: const EdgeInsets.all(16),
             borderRadius: BorderRadius.circular(20),
             child: Column(
@@ -1037,16 +1126,15 @@ class _SleepScreenState extends State<SleepScreen>
                 Text(
                   '$consistency%',
                   style: TextStyle(
-                    color: consistColor,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 22,
-                  ),
+                      color: consistColor,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 22),
                 ),
                 const SizedBox(height: 2),
-                const Text(
+                Text(
                   'Consistency',
                   style: TextStyle(
-                      color: _SC.textSec,
+                      color: _SC.textSec(context),
                       fontSize: 11,
                       fontWeight: FontWeight.w600),
                 ),
@@ -1068,18 +1156,22 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // ── Wind-Down Routine Card ──
+  // ─────────────────────────────────────────────────────────────────────────
+  // WIND-DOWN CARD
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildWindDownCard(SleepProvider sleep) {
     if (sleep.windDownActive) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [_SC.purple.withValues(alpha: 0.25), _SC.card],
-          ),
+          color: _SC.isDark(context)
+              ? _SC.purple.withValues(alpha: 0.18)
+              : _SC.purple.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: _SC.purple.withValues(alpha: 0.4)),
+          border: Border.all(
+              color: _SC.purple.withValues(
+                  alpha: _SC.isDark(context) ? 0.4 : 0.35)),
         ),
         child: Column(
           children: [
@@ -1092,22 +1184,23 @@ class _SleepScreenState extends State<SleepScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Wind-Down Active',
+                      Text('Wind-Down Active',
                           style: TextStyle(
-                              color: Colors.white,
+                              color: _SC.textPrimary(context),
                               fontWeight: FontWeight.w800,
                               fontSize: 16)),
                       const SizedBox(height: 2),
                       Text('Relax... sleep starts when timer ends',
-                          style: TextStyle(color: _SC.textSec, fontSize: 12)),
+                          style: TextStyle(
+                              color: _SC.textSec(context), fontSize: 12)),
                     ],
                   ),
                 ),
                 GestureDetector(
                   onTap: () => sleep.stopWindDown(),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: _SC.rem.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
@@ -1140,20 +1233,20 @@ class _SleepScreenState extends State<SleepScreen>
                     (sleep.windDownSecondsLeft / (sleep.windDownMinutes * 60))
                         .clamp(0.0, 1.0),
                 minHeight: 6,
-                backgroundColor: Colors.white.withValues(alpha: 0.08),
+                backgroundColor:
+                _SC.isDark(context) ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08),
                 valueColor: const AlwaysStoppedAnimation(_SC.purple),
               ),
             ),
             const SizedBox(height: 12),
-            // Wind-down tips
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: const [
-                _WindDownTip('📵', 'Put phone away'),
-                _WindDownTip('🧘', 'Stretch or meditate'),
-                _WindDownTip('📖', 'Read a book'),
-                _WindDownTip('🫖', 'Herbal tea'),
+              children: [
+                _WindDownTip('📵', 'Put phone away', context),
+                _WindDownTip('🧘', 'Stretch or meditate', context),
+                _WindDownTip('📖', 'Read a book', context),
+                _WindDownTip('🫖', 'Herbal tea', context),
               ],
             ),
           ],
@@ -1161,9 +1254,7 @@ class _SleepScreenState extends State<SleepScreen>
       );
     }
 
-    return NeuContainer(
-      padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(24),
+    return _adaptiveCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1172,28 +1263,25 @@ class _SleepScreenState extends State<SleepScreen>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [
-                    _SC.purple.withValues(alpha: 0.2),
-                    _SC.purple.withValues(alpha: 0.05),
-                  ]),
+                  color: _SC.purple.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(Icons.self_improvement_rounded,
                     color: _SC.purple, size: 24),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Wind-Down Routine',
                         style: TextStyle(
-                            color: Colors.white,
+                            color: _SC.textPrimary(context),
                             fontWeight: FontWeight.w800,
                             fontSize: 16)),
                     Text('Prepare your mind for sleep',
                         style: TextStyle(
-                            color: _SC.textSec,
+                            color: _SC.textSec(context),
                             fontSize: 12,
                             fontWeight: FontWeight.w500)),
                   ],
@@ -1204,9 +1292,9 @@ class _SleepScreenState extends State<SleepScreen>
           const SizedBox(height: 16),
           Row(
             children: [
-              const Text('Duration: ',
+              Text('Duration: ',
                   style: TextStyle(
-                      color: _SC.textSec,
+                      color: _SC.textSec(context),
                       fontSize: 13,
                       fontWeight: FontWeight.w600)),
               ...([15, 30, 45, 60].map((m) {
@@ -1220,18 +1308,18 @@ class _SleepScreenState extends State<SleepScreen>
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: sel
-                            ? _SC.purple.withValues(alpha: 0.2)
+                            ? _SC.purple.withValues(alpha: 0.15)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                             color: sel
                                 ? _SC.purple
-                                : Colors.white.withValues(alpha: 0.1)),
+                                : _SC.border(context)),
                       ),
                       child: Text(
                         '${m}m',
                         style: TextStyle(
-                            color: sel ? _SC.purple : _SC.textSec,
+                            color: sel ? _SC.purple : _SC.textSec(context),
                             fontWeight: FontWeight.w700,
                             fontSize: 12),
                       ),
@@ -1255,7 +1343,8 @@ class _SleepScreenState extends State<SleepScreen>
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.play_arrow_rounded, color: Colors.white, size: 22),
+                  Icon(Icons.play_arrow_rounded,
+                      color: Colors.white, size: 22),
                   SizedBox(width: 8),
                   Text('Start Wind-Down',
                       style: TextStyle(
@@ -1271,13 +1360,13 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // ── Ambient Sounds Card ──
+  // ─────────────────────────────────────────────────────────────────────────
+  // AMBIENT SOUNDS CARD
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildAmbientSoundsCard(SleepProvider sleep) {
     final sounds = SleepProvider.ambientSounds;
 
-    return NeuContainer(
-      padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(24),
+    return _adaptiveCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1286,28 +1375,25 @@ class _SleepScreenState extends State<SleepScreen>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [
-                    _SC.core.withValues(alpha: 0.2),
-                    _SC.core.withValues(alpha: 0.05),
-                  ]),
+                  color: _SC.core.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(Icons.music_note_rounded,
                     color: _SC.core, size: 24),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Sleep Sounds',
                         style: TextStyle(
-                            color: Colors.white,
+                            color: _SC.textPrimary(context),
                             fontWeight: FontWeight.w800,
                             fontSize: 16)),
                     Text('Ambient noise for better sleep',
                         style: TextStyle(
-                            color: _SC.textSec,
+                            color: _SC.textSec(context),
                             fontSize: 12,
                             fontWeight: FontWeight.w500)),
                   ],
@@ -1317,8 +1403,8 @@ class _SleepScreenState extends State<SleepScreen>
                 GestureDetector(
                   onTap: () => sleep.stopAmbientSound(),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: _SC.rem.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
@@ -1353,12 +1439,10 @@ class _SleepScreenState extends State<SleepScreen>
                   decoration: BoxDecoration(
                     color: isActive
                         ? s.color.withValues(alpha: 0.15)
-                        : Colors.white.withValues(alpha: 0.04),
+                        : _SC.surface(context),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isActive
-                          ? s.color
-                          : Colors.white.withValues(alpha: 0.06),
+                      color: isActive ? s.color : _SC.border(context),
                       width: isActive ? 1.5 : 1,
                     ),
                   ),
@@ -1371,9 +1455,10 @@ class _SleepScreenState extends State<SleepScreen>
                         s.name,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: isActive ? s.color : _SC.textSec,
-                          fontWeight:
-                              isActive ? FontWeight.w800 : FontWeight.w600,
+                          color: isActive ? s.color : _SC.textSec(context),
+                          fontWeight: isActive
+                              ? FontWeight.w800
+                              : FontWeight.w600,
                           fontSize: 10,
                         ),
                       ),
@@ -1387,26 +1472,28 @@ class _SleepScreenState extends State<SleepScreen>
             const SizedBox(height: 14),
             Row(
               children: [
-                const Icon(Icons.volume_down_rounded,
-                    color: _SC.textSec, size: 18),
+                Icon(Icons.volume_down_rounded,
+                    color: _SC.textSec(context), size: 18),
                 Expanded(
                   child: Slider(
                     value: sleep.ambientVolume,
                     onChanged: (v) => sleep.setAmbientVolume(v),
                     activeColor: _SC.core,
-                    inactiveColor: Colors.white.withValues(alpha: 0.08),
+                    inactiveColor: _SC.isDark(context)
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.1),
                   ),
                 ),
-                const Icon(Icons.volume_up_rounded,
-                    color: _SC.textSec, size: 18),
+                Icon(Icons.volume_up_rounded,
+                    color: _SC.textSec(context), size: 18),
               ],
             ),
             const SizedBox(height: 6),
             Row(
               children: [
-                const Text('Auto-stop: ',
+                Text('Auto-stop: ',
                     style: TextStyle(
-                        color: _SC.textSec,
+                        color: _SC.textSec(context),
                         fontSize: 12,
                         fontWeight: FontWeight.w600)),
                 ...([0, 15, 30, 60].map((m) {
@@ -1424,14 +1511,13 @@ class _SleepScreenState extends State<SleepScreen>
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                              color: sel
-                                  ? _SC.core
-                                  : Colors.white.withValues(alpha: 0.08)),
+                              color:
+                              sel ? _SC.core : _SC.border(context)),
                         ),
                         child: Text(
                           m == 0 ? 'Off' : '${m}m',
                           style: TextStyle(
-                              color: sel ? _SC.core : _SC.textSec,
+                              color: sel ? _SC.core : _SC.textSec(context),
                               fontWeight: FontWeight.w700,
                               fontSize: 11),
                         ),
@@ -1447,21 +1533,22 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // ── Dream Journal View (tab 2) ──
+  // ─────────────────────────────────────────────────────────────────────────
+  // DREAM JOURNAL VIEW
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildDreamJournalView(SleepProvider sleep) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header + add button
         Row(
           children: [
             const Text('🌙', style: TextStyle(fontSize: 22)),
             const SizedBox(width: 10),
-            const Expanded(
+            Expanded(
               child: Text(
                 'Dream Journal',
                 style: TextStyle(
-                    color: Colors.white,
+                    color: _SC.textPrimary(context),
                     fontWeight: FontWeight.w900,
                     fontSize: 20),
               ),
@@ -1470,7 +1557,7 @@ class _SleepScreenState extends State<SleepScreen>
               onTap: () => _showAddDreamDialog(sleep),
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                       colors: [_SC.purple, Color(0xFF5C35CC)]),
@@ -1493,13 +1580,12 @@ class _SleepScreenState extends State<SleepScreen>
           ],
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'Record your dreams to improve recall and discover patterns.',
-          style: TextStyle(color: _SC.textSec, fontSize: 13, height: 1.4),
+          style: TextStyle(
+              color: _SC.textSec(context), fontSize: 13, height: 1.4),
         ),
         const SizedBox(height: 16),
-
-        // Dream stats
         if (sleep.dreamJournal.isNotEmpty)
           Row(
             children: [
@@ -1513,16 +1599,14 @@ class _SleepScreenState extends State<SleepScreen>
               _dreamStat(
                   'This Week',
                   '${sleep.dreamJournal.where((d) {
-                    final days = DateTime.now().difference(d.createdAt).inDays;
+                    final days =
+                        DateTime.now().difference(d.createdAt).inDays;
                     return days < 7;
                   }).length}',
                   _SC.core),
             ],
           ),
-
         if (sleep.dreamJournal.isNotEmpty) const SizedBox(height: 16),
-
-        // Dream entries
         if (sleep.dreamJournal.isEmpty) ...[
           const SizedBox(height: 40),
           Center(
@@ -1530,9 +1614,9 @@ class _SleepScreenState extends State<SleepScreen>
               children: [
                 const Text('💭', style: TextStyle(fontSize: 48)),
                 const SizedBox(height: 16),
-                const Text('No dreams logged yet',
+                Text('No dreams logged yet',
                     style: TextStyle(
-                        color: Colors.white,
+                        color: _SC.textPrimary(context),
                         fontWeight: FontWeight.w800,
                         fontSize: 16)),
                 const SizedBox(height: 8),
@@ -1540,7 +1624,9 @@ class _SleepScreenState extends State<SleepScreen>
                     'Tap "Log Dream" right after waking up\nfor the best recall.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        color: _SC.textSec, fontSize: 13, height: 1.5)),
+                        color: _SC.textSec(context),
+                        fontSize: 13,
+                        height: 1.5)),
               ],
             ),
           ),
@@ -1552,7 +1638,7 @@ class _SleepScreenState extends State<SleepScreen>
 
   Widget _dreamStat(String label, String value, Color color) {
     return Expanded(
-      child: NeuContainer(
+      child: _adaptiveCard(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         borderRadius: BorderRadius.circular(14),
         child: Column(
@@ -1562,8 +1648,8 @@ class _SleepScreenState extends State<SleepScreen>
                     color: color, fontWeight: FontWeight.w900, fontSize: 20)),
             const SizedBox(height: 2),
             Text(label,
-                style: const TextStyle(
-                    color: _SC.textSec,
+                style: TextStyle(
+                    color: _SC.textSec(context),
                     fontWeight: FontWeight.w600,
                     fontSize: 11)),
           ],
@@ -1591,11 +1677,19 @@ class _SleepScreenState extends State<SleepScreen>
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: _SC.card,
+          color: _SC.card(context),
           borderRadius: BorderRadius.circular(18),
           border: dream.lucid
-              ? Border.all(color: _SC.mint.withValues(alpha: 0.3))
-              : null,
+              ? Border.all(color: _SC.mint.withValues(alpha: 0.4))
+              : Border.all(color: _SC.border(context)),
+          boxShadow: _SC.isDark(context)
+              ? null
+              : [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2))
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1610,15 +1704,15 @@ class _SleepScreenState extends State<SleepScreen>
                     children: [
                       Text(
                         dream.title,
-                        style: const TextStyle(
-                            color: Colors.white,
+                        style: TextStyle(
+                            color: _SC.textPrimary(context),
                             fontWeight: FontWeight.w800,
                             fontSize: 15),
                       ),
                       Text(
                         dream.date,
-                        style: const TextStyle(
-                            color: _SC.textSec,
+                        style: TextStyle(
+                            color: _SC.textSec(context),
                             fontSize: 11,
                             fontWeight: FontWeight.w500),
                       ),
@@ -1627,8 +1721,8 @@ class _SleepScreenState extends State<SleepScreen>
                 ),
                 if (dream.lucid)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _SC.mint.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
@@ -1641,14 +1735,15 @@ class _SleepScreenState extends State<SleepScreen>
                   ),
               ],
             ),
-            if (dream.description != null && dream.description!.isNotEmpty) ...[
+            if (dream.description != null &&
+                dream.description!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 dream.description!,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    color: _SC.textSec, fontSize: 13, height: 1.4),
+                style: TextStyle(
+                    color: _SC.textSec(context), fontSize: 13, height: 1.4),
               ),
             ],
             if (dream.tags.isNotEmpty) ...[
@@ -1658,8 +1753,8 @@ class _SleepScreenState extends State<SleepScreen>
                 runSpacing: 4,
                 children: dream.tags.map((tag) {
                   return Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: _SC.purple.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
@@ -1691,7 +1786,7 @@ class _SleepScreenState extends State<SleepScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: _SC.card,
+      backgroundColor: _SC.card(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -1708,19 +1803,18 @@ class _SleepScreenState extends State<SleepScreen>
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                          color: _SC.textSec.withValues(alpha: 0.3),
+                          color: _SC.textSec(context).withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 20),
-              const Text('Log Your Dream',
+              Text('Log Your Dream',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: _SC.textPrimary(context),
                       fontWeight: FontWeight.w900,
                       fontSize: 20)),
               const SizedBox(height: 16),
-              // Mood selector
-              const Text('How did it feel?',
+              Text('How did it feel?',
                   style: TextStyle(
-                      color: _SC.textSec,
+                      color: _SC.textSec(context),
                       fontWeight: FontWeight.w700,
                       fontSize: 13)),
               const SizedBox(height: 8),
@@ -1734,74 +1828,40 @@ class _SleepScreenState extends State<SleepScreen>
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
                           color: sel
-                              ? _SC.purple.withValues(alpha: 0.2)
+                              ? _SC.purple.withValues(alpha: 0.15)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
-                          border: sel ? Border.all(color: _SC.purple) : null,
+                          border: sel
+                              ? Border.all(color: _SC.purple)
+                              : null,
                         ),
                         child: Center(
                             child: Text(m,
-                                style: TextStyle(fontSize: sel ? 24 : 20))),
+                                style: TextStyle(
+                                    fontSize: sel ? 24 : 20))),
                       ),
                     ),
                   );
                 }).toList(),
               ),
               const SizedBox(height: 14),
-              TextField(
-                controller: titleCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Dream title...',
-                  hintStyle:
-                      TextStyle(color: _SC.textSec.withValues(alpha: 0.6)),
-                  filled: true,
-                  fillColor: AppTheme.darkBg,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none),
-                ),
-              ),
+              _inputField(titleCtrl, 'Dream title...'),
               const SizedBox(height: 10),
-              TextField(
-                controller: descCtrl,
-                maxLines: 3,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Describe your dream...',
-                  hintStyle:
-                      TextStyle(color: _SC.textSec.withValues(alpha: 0.6)),
-                  filled: true,
-                  fillColor: AppTheme.darkBg,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none),
-                ),
-              ),
+              _inputField(descCtrl, 'Describe your dream...', maxLines: 3),
               const SizedBox(height: 10),
-              TextField(
-                controller: tagsCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Tags (comma-separated)',
-                  hintStyle:
-                      TextStyle(color: _SC.textSec.withValues(alpha: 0.6)),
-                  filled: true,
-                  fillColor: AppTheme.darkBg,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none),
-                ),
-              ),
+              _inputField(tagsCtrl, 'Tags (comma-separated)'),
               const SizedBox(height: 12),
               Row(
                 children: [
                   Icon(Icons.auto_awesome_rounded,
-                      color: isLucid ? _SC.mint : _SC.textSec, size: 20),
+                      color: isLucid ? _SC.mint : _SC.textSec(context),
+                      size: 20),
                   const SizedBox(width: 10),
                   Text('Lucid Dream',
                       style: TextStyle(
-                          color: isLucid ? Colors.white : _SC.textSec,
+                          color: isLucid
+                              ? _SC.textPrimary(context)
+                              : _SC.textSec(context),
                           fontWeight: FontWeight.w700,
                           fontSize: 14)),
                   const Spacer(),
@@ -1820,10 +1880,10 @@ class _SleepScreenState extends State<SleepScreen>
                   final tags = tagsCtrl.text.trim().isEmpty
                       ? <String>[]
                       : tagsCtrl.text
-                          .split(',')
-                          .map((t) => t.trim())
-                          .where((t) => t.isNotEmpty)
-                          .toList();
+                      .split(',')
+                      .map((t) => t.trim())
+                      .where((t) => t.isNotEmpty)
+                      .toList();
                   sleep.addDream(
                     title: titleCtrl.text.trim(),
                     description: descCtrl.text.trim().isEmpty
@@ -1859,18 +1919,36 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // --------------------------------------
+  Widget _inputField(TextEditingController ctrl, String hint,
+      {int maxLines = 1}) {
+    return TextField(
+      controller: ctrl,
+      maxLines: maxLines,
+      style: TextStyle(color: _SC.textPrimary(context)),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: _SC.textSec(context)),
+        filled: true,
+        fillColor: _SC.inputFill(context),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // ANALYSIS VIEW
-  // --------------------------------------
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildAnalysisView(SleepProvider sleep) {
     final weekData = sleep.weeklyData;
-    final maxH = weekData.fold<double>(0, (a, b) => a > b.hours ? a : b.hours);
+    final maxH =
+    weekData.fold<double>(0, (a, b) => a > b.hours ? a : b.hours);
     final chartMax = maxH < 1 ? 10.0 : maxH + 2;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Quick stats
         Row(
           children: [
             Expanded(
@@ -1890,27 +1968,23 @@ class _SleepScreenState extends State<SleepScreen>
           ],
         ),
         const SizedBox(height: 20),
-
-        // Weekly chart
-        NeuContainer(
-          padding: const EdgeInsets.all(20),
-          borderRadius: BorderRadius.circular(24),
+        _adaptiveCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Text('This Week',
+                  Text('This Week',
                       style: TextStyle(
-                          color: Colors.white,
+                          color: _SC.textPrimary(context),
                           fontWeight: FontWeight.w800,
                           fontSize: 16)),
                   const Spacer(),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: _SC.mint.withValues(alpha: 0.1),
+                      color: _SC.mint.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -1928,8 +2002,9 @@ class _SleepScreenState extends State<SleepScreen>
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: weekData.map((d) {
-                    final barH =
-                        chartMax > 0 ? (d.hours / chartMax) * 130 : 0.0;
+                    final barH = chartMax > 0
+                        ? (d.hours / chartMax) * 130
+                        : 0.0;
                     final isToday = d == weekData.last;
                     return Expanded(
                       child: Padding(
@@ -1940,7 +2015,9 @@ class _SleepScreenState extends State<SleepScreen>
                             if (d.hours > 0)
                               Text(d.hours.toStringAsFixed(1),
                                   style: TextStyle(
-                                      color: isToday ? _SC.mint : _SC.textSec,
+                                      color: isToday
+                                          ? _SC.mint
+                                          : _SC.textSec(context),
                                       fontWeight: FontWeight.w700,
                                       fontSize: 10)),
                             const SizedBox(height: 4),
@@ -1954,26 +2031,33 @@ class _SleepScreenState extends State<SleepScreen>
                                   end: Alignment.topCenter,
                                   colors: isToday
                                       ? [_SC.mint, _SC.mintDark]
+                                      : _SC.isDark(context)
+                                      ? [
+                                    const Color(0xFF2A2D40),
+                                    const Color(0xFF3A3D50)
+                                  ]
                                       : [
-                                          const Color(0xFF2A2D40),
-                                          const Color(0xFF3A3D50)
-                                        ],
+                                    const Color(0xFFD0DAE8),
+                                    const Color(0xFFBCC8D8)
+                                  ],
                                 ),
                                 boxShadow: isToday
                                     ? [
-                                        BoxShadow(
-                                            color:
-                                                _SC.mint.withValues(alpha: 0.3),
-                                            blurRadius: 8,
-                                            spreadRadius: 1)
-                                      ]
+                                  BoxShadow(
+                                      color: _SC.mint
+                                          .withValues(alpha: 0.3),
+                                      blurRadius: 8,
+                                      spreadRadius: 1)
+                                ]
                                     : null,
                               ),
                             ),
                             const SizedBox(height: 8),
                             Text(d.dayLabel,
                                 style: TextStyle(
-                                    color: isToday ? _SC.mint : _SC.textSec,
+                                    color: isToday
+                                        ? _SC.mint
+                                        : _SC.textSec(context),
                                     fontWeight: isToday
                                         ? FontWeight.w800
                                         : FontWeight.w500,
@@ -1989,17 +2073,13 @@ class _SleepScreenState extends State<SleepScreen>
           ),
         ),
         const SizedBox(height: 20),
-
-        // Quality chart
-        NeuContainer(
-          padding: const EdgeInsets.all(20),
-          borderRadius: BorderRadius.circular(24),
+        _adaptiveCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Quality Trend',
+              Text('Quality Trend',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: _SC.textPrimary(context),
                       fontWeight: FontWeight.w800,
                       fontSize: 16)),
               const SizedBox(height: 20),
@@ -2009,7 +2089,7 @@ class _SleepScreenState extends State<SleepScreen>
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: weekData.map((d) {
                     final barH =
-                        d.quality > 0 ? (d.quality / 100.0) * 70.0 : 4.0;
+                    d.quality > 0 ? (d.quality / 100.0) * 70.0 : 4.0;
                     Color barColor;
                     if (d.quality >= 80) {
                       barColor = _SC.mint;
@@ -2018,7 +2098,9 @@ class _SleepScreenState extends State<SleepScreen>
                     } else if (d.quality > 0) {
                       barColor = _SC.rem;
                     } else {
-                      barColor = const Color(0xFF2A2D40);
+                      barColor = _SC.isDark(context)
+                          ? const Color(0xFF2A2D40)
+                          : const Color(0xFFD0DAE8);
                     }
 
                     return Expanded(
@@ -2052,17 +2134,13 @@ class _SleepScreenState extends State<SleepScreen>
           ),
         ),
         const SizedBox(height: 20),
-
-        // Sleep pattern row
-        NeuContainer(
-          padding: const EdgeInsets.all(20),
-          borderRadius: BorderRadius.circular(24),
+        _adaptiveCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Sleep Pattern',
+              Text('Sleep Pattern',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: _SC.textPrimary(context),
                       fontWeight: FontWeight.w800,
                       fontSize: 16)),
               const SizedBox(height: 16),
@@ -2070,35 +2148,28 @@ class _SleepScreenState extends State<SleepScreen>
                 children: [
                   _patternStat('Avg Bedtime',
                       _formatHour(sleep.averageBedtimeHour), _SC.purple),
-                  _patternStat('Avg Wake', _formatHour(sleep.averageWakeHour),
-                      _SC.moonYellow),
-                  _patternStat(
-                      'Sessions', '${sleep.sleepHistory.length}', _SC.mint),
+                  _patternStat('Avg Wake',
+                      _formatHour(sleep.averageWakeHour), _SC.moonYellow),
+                  _patternStat('Sessions',
+                      '${sleep.sleepHistory.length}', _SC.mint),
                 ],
               ),
             ],
           ),
         ),
-
-        // History
         if (sleep.sleepHistory.isNotEmpty) ...[
           const SizedBox(height: 20),
-
-          // --- Night Noise Level Card ---
           if (sleep.noiseTimeline.isNotEmpty) ...[
             _buildNightNoiseCard(sleep),
             const SizedBox(height: 20),
           ],
-
-          // --- Night Sound Recordings ---
           if (sleep.recordings.isNotEmpty) ...[
             _buildNightSoundsSection(sleep),
             const SizedBox(height: 20),
           ],
-
-          const Text('Recent History',
+          Text('Recent History',
               style: TextStyle(
-                  color: Colors.white,
+                  color: _SC.textPrimary(context),
                   fontWeight: FontWeight.w800,
                   fontSize: 16)),
           const SizedBox(height: 12),
@@ -2110,7 +2181,7 @@ class _SleepScreenState extends State<SleepScreen>
 
   Widget _analyticsTile(
       IconData icon, String label, String value, Color color) {
-    return NeuContainer(
+    return _adaptiveCard(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
       borderRadius: BorderRadius.circular(18),
       child: Column(
@@ -2122,8 +2193,8 @@ class _SleepScreenState extends State<SleepScreen>
                   color: color, fontWeight: FontWeight.w900, fontSize: 18)),
           const SizedBox(height: 2),
           Text(label,
-              style: const TextStyle(
-                  color: _SC.textSec,
+              style: TextStyle(
+                  color: _SC.textSec(context),
                   fontWeight: FontWeight.w600,
                   fontSize: 11)),
         ],
@@ -2140,8 +2211,8 @@ class _SleepScreenState extends State<SleepScreen>
                   color: color, fontWeight: FontWeight.w900, fontSize: 18)),
           const SizedBox(height: 4),
           Text(label,
-              style: const TextStyle(
-                  color: _SC.textSec,
+              style: TextStyle(
+                  color: _SC.textSec(context),
                   fontWeight: FontWeight.w600,
                   fontSize: 11)),
         ],
@@ -2157,17 +2228,14 @@ class _SleepScreenState extends State<SleepScreen>
     return '$display:${min.toString().padLeft(2, '0')} $period';
   }
 
-  // ----- Night Noise Level Card (analysis) -----
   Widget _buildNightNoiseCard(SleepProvider sleep) {
     final summary = sleep.noiseSummary;
     if (summary == null) return const SizedBox.shrink();
     final timeline = sleep.noiseTimeline;
     final maxDb =
-        timeline.fold<double>(0, (m, v) => v > m ? v : m).clamp(30.0, 100.0);
+    timeline.fold<double>(0, (m, v) => v > m ? v : m).clamp(30.0, 100.0);
 
-    return NeuContainer(
-      padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(24),
+    return _adaptiveCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2175,17 +2243,17 @@ class _SleepScreenState extends State<SleepScreen>
             children: [
               const Icon(Icons.graphic_eq_rounded, color: _SC.mint, size: 20),
               const SizedBox(width: 8),
-              const Text('Night Noise Level',
+              Text('Night Noise Level',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: _SC.textPrimary(context),
                       fontWeight: FontWeight.w800,
                       fontSize: 16)),
               const Spacer(),
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: _SC.mint.withValues(alpha: 0.1),
+                  color: _SC.mint.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text('${summary.totalRecordings} events',
@@ -2197,7 +2265,6 @@ class _SleepScreenState extends State<SleepScreen>
             ],
           ),
           const SizedBox(height: 16),
-          // Stats row
           Row(
             children: [
               _noiseStat('Avg. Noise',
@@ -2210,16 +2277,16 @@ class _SleepScreenState extends State<SleepScreen>
             ],
           ),
           const SizedBox(height: 16),
-          // Noise bar chart
           SizedBox(
             height: 80,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: List.generate(
                 timeline.length > 60 ? 60 : timeline.length,
-                (i) {
-                  final idx =
-                      timeline.length > 60 ? (i * timeline.length ~/ 60) : i;
+                    (i) {
+                  final idx = timeline.length > 60
+                      ? (i * timeline.length ~/ 60)
+                      : i;
                   final db = timeline[idx];
                   final h = (db / maxDb * 70).clamp(3.0, 70.0);
                   Color barColor;
@@ -2247,7 +2314,8 @@ class _SleepScreenState extends State<SleepScreen>
           if (summary.healthNote.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: _SC.mint.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
@@ -2260,8 +2328,8 @@ class _SleepScreenState extends State<SleepScreen>
                   Expanded(
                     child: Text(
                       summary.healthNote,
-                      style: const TextStyle(
-                          color: _SC.textSec,
+                      style: TextStyle(
+                          color: _SC.textSec(context),
                           fontSize: 11,
                           fontWeight: FontWeight.w500),
                     ),
@@ -2284,8 +2352,8 @@ class _SleepScreenState extends State<SleepScreen>
                   color: color, fontWeight: FontWeight.w900, fontSize: 16)),
           const SizedBox(height: 4),
           Text(label,
-              style: const TextStyle(
-                  color: _SC.textSec,
+              style: TextStyle(
+                  color: _SC.textSec(context),
                   fontWeight: FontWeight.w600,
                   fontSize: 11)),
         ],
@@ -2293,11 +2361,8 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // ----- Night Sounds Recordings Section -----
   Widget _buildNightSoundsSection(SleepProvider sleep) {
-    return NeuContainer(
-      padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(24),
+    return _adaptiveCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2305,21 +2370,22 @@ class _SleepScreenState extends State<SleepScreen>
             children: [
               const Icon(Icons.mic_rounded, color: _SC.purple, size: 20),
               const SizedBox(width: 8),
-              const Text('Night Sounds',
+              Text('Night Sounds',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: _SC.textPrimary(context),
                       fontWeight: FontWeight.w800,
                       fontSize: 16)),
               const Spacer(),
               Text('${sleep.recordings.length} recordings',
-                  style: const TextStyle(
-                      color: _SC.textSec,
+                  style: TextStyle(
+                      color: _SC.textSec(context),
                       fontWeight: FontWeight.w600,
                       fontSize: 12)),
             ],
           ),
           const SizedBox(height: 16),
-          ...sleep.recordings.map((rec) => _buildRecordingCard(rec, sleep)),
+          ...sleep.recordings
+              .map((rec) => _buildRecordingCard(rec, sleep)),
         ],
       ),
     );
@@ -2329,8 +2395,6 @@ class _SleepScreenState extends State<SleepScreen>
     final isPlaying = _playingRecordingId == rec.id;
     final time = TimeOfDay.fromDateTime(rec.timestamp);
     final timeStr = time.format(context);
-
-    // Fake waveform bars based on peak dB
     const waveCount = 30;
     final seed = rec.id.hashCode;
 
@@ -2338,19 +2402,18 @@ class _SleepScreenState extends State<SleepScreen>
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: _SC.surface(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
             color: isPlaying
-                ? _SC.mint.withValues(alpha: 0.3)
-                : Colors.white.withValues(alpha: 0.06)),
+                ? _SC.mint.withValues(alpha: 0.4)
+                : _SC.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              // Emoji badge
               Container(
                 width: 40,
                 height: 40,
@@ -2376,15 +2439,14 @@ class _SleepScreenState extends State<SleepScreen>
                     const SizedBox(height: 2),
                     Text(
                       '$timeStr • ${rec.durationSeconds}s • ${rec.peakDecibels.toStringAsFixed(0)} dB',
-                      style: const TextStyle(
-                          color: _SC.textSec,
+                      style: TextStyle(
+                          color: _SC.textSec(context),
                           fontSize: 11,
                           fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
               ),
-              // Play button
               GestureDetector(
                 onTap: () => _togglePlayRecording(rec),
                 child: Container(
@@ -2394,11 +2456,17 @@ class _SleepScreenState extends State<SleepScreen>
                     shape: BoxShape.circle,
                     color: isPlaying
                         ? _SC.mint
-                        : Colors.white.withValues(alpha: 0.08),
+                        : _SC.isDark(context)
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.06),
                   ),
                   child: Icon(
-                    isPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
-                    color: isPlaying ? Colors.black : Colors.white70,
+                    isPlaying
+                        ? Icons.stop_rounded
+                        : Icons.play_arrow_rounded,
+                    color: isPlaying
+                        ? Colors.white
+                        : _SC.textPrimary(context),
                     size: 20,
                   ),
                 ),
@@ -2406,13 +2474,11 @@ class _SleepScreenState extends State<SleepScreen>
             ],
           ),
           const SizedBox(height: 10),
-          // Waveform bars
           SizedBox(
             height: 32,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: List.generate(waveCount, (i) {
-                // Pseudo-random wave heights based on seed
                 final h = 6.0 +
                     ((seed * (i + 1) * 7) % 22).toDouble() *
                         (rec.peakDecibels / 80.0);
@@ -2422,9 +2488,13 @@ class _SleepScreenState extends State<SleepScreen>
                     height: h.clamp(4.0, 28.0),
                     decoration: BoxDecoration(
                       color: isPlaying
-                          ? _SC.mint.withValues(alpha: 0.6 + (i % 3) * 0.1)
-                          : Colors.white
-                              .withValues(alpha: 0.12 + (i % 3) * 0.04),
+                          ? _SC.mint.withValues(
+                          alpha: 0.6 + (i % 3) * 0.1)
+                          : _SC.isDark(context)
+                          ? Colors.white.withValues(
+                          alpha: 0.12 + (i % 3) * 0.04)
+                          : Colors.black.withValues(
+                          alpha: 0.1 + (i % 3) * 0.04),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -2492,8 +2562,17 @@ class _SleepScreenState extends State<SleepScreen>
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: _SC.card,
+          color: _SC.card(context),
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _SC.border(context)),
+          boxShadow: _SC.isDark(context)
+              ? null
+              : [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 2))
+          ],
         ),
         child: Row(
           children: [
@@ -2501,14 +2580,14 @@ class _SleepScreenState extends State<SleepScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(s.date,
-                    style: const TextStyle(
-                        color: Colors.white,
+                    style: TextStyle(
+                        color: _SC.textPrimary(context),
                         fontWeight: FontWeight.w700,
                         fontSize: 13)),
                 const SizedBox(height: 2),
                 Text('${s.formattedBedtime} - ${s.formattedWakeTime}',
-                    style: const TextStyle(
-                        color: _SC.textSec,
+                    style: TextStyle(
+                        color: _SC.textSec(context),
                         fontSize: 11,
                         fontWeight: FontWeight.w500)),
               ],
@@ -2527,17 +2606,27 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // --------------------------------------
+  // ─────────────────────────────────────────────────────────────────────────
   // SLEEPING VIEW
-  // --------------------------------------
+  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildSleepingView(SleepProvider sleep) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF0D0F1E), Color(0xFF1A1C3A), Color(0xFF0D0F1E)],
+          colors: _SC.isDark(context)
+              ? [
+            const Color(0xFF0D0F1E),
+            const Color(0xFF1A1C3A),
+            const Color(0xFF0D0F1E)
+          ]
+              : [
+            const Color(0xFFEDF2F7),
+            const Color(0xFFF7FAFC),
+            const Color(0xFFEDF2F7)
+          ],
         ),
       ),
       child: SingleChildScrollView(
@@ -2548,20 +2637,20 @@ class _SleepScreenState extends State<SleepScreen>
             const SizedBox(height: 32),
             Text(
               sleep.formattedElapsed,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 56,
                 fontWeight: FontWeight.w200,
-                color: Colors.white,
+                color: _SC.textPrimary(context),
                 letterSpacing: 4,
-                fontFeatures: [FontFeature.tabularFigures()],
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Sleeping since ${sleep.bedtime != null ? _formatTime(sleep.bedtime!) : ''}',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 14,
-                  color: _SC.textSec,
+                  color: _SC.textSec(context),
                   fontWeight: FontWeight.w500),
             ),
             if (sleep.wakeUpTime != null && sleep.alarmEnabled) ...[
@@ -2583,9 +2672,7 @@ class _SleepScreenState extends State<SleepScreen>
               ),
             ],
             const SizedBox(height: 32),
-            // -- Recording indicator --
             if (sleep.recordingEnabled) _buildRecordingIndicator(sleep),
-            // -- Noise level mini chart --
             if (sleep.noiseTimeline.isNotEmpty) _buildLiveNoiseChart(sleep),
             const SizedBox(height: 24),
             _buildSleepingStages(sleep),
@@ -2598,31 +2685,25 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // Recording active indicator (pulsing mic)
   Widget _buildRecordingIndicator(SleepProvider sleep) {
     return AnimatedBuilder(
       animation: _pulseController,
       builder: (ctx, child) {
         final pulse = _pulseController.value;
+        final color =
+        sleep.isRecording ? Colors.redAccent : _SC.mint;
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 32),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: (sleep.isRecording ? Colors.redAccent : _SC.mint)
-                .withValues(alpha: 0.1 + pulse * 0.05),
+            color: color.withValues(alpha: 0.1 + pulse * 0.05),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: (sleep.isRecording ? Colors.redAccent : _SC.mint)
-                  .withValues(alpha: 0.3),
-            ),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.mic_rounded,
-                color: sleep.isRecording ? Colors.redAccent : _SC.mint,
-                size: 20,
-              ),
+              Icon(Icons.mic_rounded, color: color, size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -2630,26 +2711,24 @@ class _SleepScreenState extends State<SleepScreen>
                       ? 'Recording sound…'
                       : 'Listening for sounds…',
                   style: TextStyle(
-                    color: sleep.isRecording ? Colors.redAccent : _SC.mint,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13),
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: _SC.surface(context),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '${sleep.recordings.length} sounds',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(
+                      color: _SC.textSec(context),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -2659,47 +2738,45 @@ class _SleepScreenState extends State<SleepScreen>
     );
   }
 
-  // Live noise level mini bar chart
   Widget _buildLiveNoiseChart(SleepProvider sleep) {
     final timeline = sleep.noiseTimeline;
-    // Show last 30 datapoints
     final visible = timeline.length > 30
         ? timeline.sublist(timeline.length - 30)
         : timeline;
-    final maxDb =
-        visible.fold<double>(0, (m, v) => v > m ? v : m).clamp(30.0, 100.0);
+    final maxDb = visible
+        .fold<double>(0, (m, v) => v > m ? v : m)
+        .clamp(30.0, 100.0);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: _SC.surface(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: _SC.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.graphic_eq_rounded, color: _SC.mint, size: 16),
+              const Icon(Icons.graphic_eq_rounded,
+                  color: _SC.mint, size: 16),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Night Noise Level',
                 style: TextStyle(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
+                    color: _SC.textSec(context),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13),
               ),
               const Spacer(),
               Text(
                 '${sleep.noiseSummary?.avgDecibels.toStringAsFixed(0) ?? '0'} dB avg',
-                style: TextStyle(
-                  color: _SC.mint.withValues(alpha: 0.8),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 11,
-                ),
+                style: const TextStyle(
+                    color: _SC.mint,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11),
               ),
             ],
           ),
@@ -2748,7 +2825,8 @@ class _SleepScreenState extends State<SleepScreen>
             shape: BoxShape.circle,
             gradient: RadialGradient(
               colors: [
-                _SC.mint.withValues(alpha: 0.15 + _pulseController.value * 0.1),
+                _SC.mint.withValues(
+                    alpha: 0.15 + _pulseController.value * 0.1),
                 _SC.mint.withValues(alpha: 0.0),
               ],
             ),
@@ -2765,15 +2843,15 @@ class _SleepScreenState extends State<SleepScreen>
                 ]),
                 boxShadow: [
                   BoxShadow(
-                    color: _SC.mint
-                        .withValues(alpha: 0.2 + _pulseController.value * 0.15),
+                    color: _SC.mint.withValues(
+                        alpha: 0.2 + _pulseController.value * 0.15),
                     blurRadius: 30 + _pulseController.value * 20,
                     spreadRadius: 5,
                   ),
                 ],
               ),
-              child:
-                  const Icon(Icons.nightlight_round, color: _SC.mint, size: 48),
+              child: const Icon(Icons.nightlight_round,
+                  color: _SC.mint, size: 48),
             ),
           ),
         );
@@ -2790,12 +2868,13 @@ class _SleepScreenState extends State<SleepScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Sleep Progress',
+              Text('Sleep Progress',
                   style: TextStyle(
-                      color: _SC.textSec,
+                      color: _SC.textSec(context),
                       fontWeight: FontWeight.w700,
                       fontSize: 14)),
-              Text('${hours.toStringAsFixed(1)}h / ${sleep.targetHours}h',
+              Text(
+                  '${hours.toStringAsFixed(1)}h / ${sleep.targetHours}h',
                   style: const TextStyle(
                       color: _SC.mint,
                       fontWeight: FontWeight.w800,
@@ -2808,8 +2887,11 @@ class _SleepScreenState extends State<SleepScreen>
             child: LinearProgressIndicator(
               value: (hours / sleep.targetHours).clamp(0.0, 1.0),
               minHeight: 8,
-              backgroundColor: Colors.white.withValues(alpha: 0.08),
-              valueColor: const AlwaysStoppedAnimation<Color>(_SC.mint),
+              backgroundColor: _SC.isDark(context)
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.08),
+              valueColor:
+              const AlwaysStoppedAnimation<Color>(_SC.mint),
             ),
           ),
         ],
@@ -2823,14 +2905,15 @@ class _SleepScreenState extends State<SleepScreen>
         final confirm = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: AppTheme.darkBg,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: const Text('Wake Up?',
+            backgroundColor: _SC.card(context),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24)),
+            title: Text('Wake Up?',
                 style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w800)),
-            content: const Text('End your sleep session and save the data.',
-                style: TextStyle(color: _SC.textSec)),
+                    color: _SC.textPrimary(context),
+                    fontWeight: FontWeight.w800)),
+            content: Text('End your sleep session and save the data.',
+                style: TextStyle(color: _SC.textSec(context))),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
@@ -2846,7 +2929,8 @@ class _SleepScreenState extends State<SleepScreen>
                 ),
                 child: const Text('Wake Up',
                     style: TextStyle(
-                        color: Colors.black, fontWeight: FontWeight.w700)),
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700)),
               ),
             ],
           ),
@@ -2854,10 +2938,12 @@ class _SleepScreenState extends State<SleepScreen>
         if (confirm == true) await sleep.stopSleep();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
-          gradient: const LinearGradient(colors: [_SC.mint, _SC.mintDark]),
+          gradient: const LinearGradient(
+              colors: [_SC.mint, _SC.mintDark]),
           boxShadow: [
             BoxShadow(
                 color: _SC.mint.withValues(alpha: 0.3),
@@ -2869,11 +2955,11 @@ class _SleepScreenState extends State<SleepScreen>
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.wb_sunny_rounded, color: Color(0xFF0D0F1E), size: 22),
+            Icon(Icons.wb_sunny_rounded, color: Colors.white, size: 22),
             SizedBox(width: 10),
             Text('Wake Up',
                 style: TextStyle(
-                    color: Color(0xFF0D0F1E),
+                    color: Colors.white,
                     fontWeight: FontWeight.w900,
                     fontSize: 18,
                     letterSpacing: 0.5)),
@@ -2889,19 +2975,56 @@ class _SleepScreenState extends State<SleepScreen>
     final period = dt.hour >= 12 ? 'PM' : 'AM';
     return '$h:$m $period';
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // HELPER: Adaptive card (white with shadow in light, dark card in dark)
+  // ─────────────────────────────────────────────────────────────────────────
+  Widget _adaptiveCard({
+    required Widget child,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(20),
+    BorderRadius? borderRadius,
+  }) {
+    final br = borderRadius ?? BorderRadius.circular(24);
+    final isDark = _SC.isDark(context);
+    return Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: _SC.card(context),
+        borderRadius: br,
+        border: Border.all(color: _SC.border(context)),
+        boxShadow: isDark
+            ? null
+            : [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 3))
+        ],
+      ),
+      child: child,
+    );
+  }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Wind Down Tip Widget (adaptive)
+// ─────────────────────────────────────────────────────────────────────────────
 class _WindDownTip extends StatelessWidget {
   final String emoji;
   final String label;
-  const _WindDownTip(this.emoji, this.label);
+  final BuildContext parentCtx;
+  const _WindDownTip(this.emoji, this.label, this.parentCtx);
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(parentCtx).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.06)
+            : Colors.black.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -2910,8 +3033,10 @@ class _WindDownTip extends StatelessWidget {
           Text(emoji, style: const TextStyle(fontSize: 14)),
           const SizedBox(width: 6),
           Text(label,
-              style: const TextStyle(
-                  color: _SC.textSec,
+              style: TextStyle(
+                  color: isDark
+                      ? const Color(0xFF8B8FA3)
+                      : const Color(0xFF5A6070),
                   fontSize: 11,
                   fontWeight: FontWeight.w600)),
         ],

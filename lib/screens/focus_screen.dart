@@ -23,7 +23,7 @@ class _FocusScreenState extends State<FocusScreen>
   static const List<String> _quotes = [
     'Your focus is your power.',
     'Every minute takes you forward.',
-    'Believe in yourself \u2014 you can do it!',
+    'Believe in yourself — you can do it!',
     'Stay focused, success will come.',
     'Deep work creates great outcomes.',
     'Your discipline today builds tomorrow.',
@@ -64,483 +64,489 @@ class _FocusScreenState extends State<FocusScreen>
   }
 
   // ===========================================
-  //  SETUP SCREEN  (unified focus levels)
+  //  SETUP SCREEN
   // ===========================================
   Widget _buildSetupFocus(FocusProvider focus) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // -- Header --
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Focus Mode',
-                        style: GoogleFonts.inter(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Choose intensity & start deep work',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: AppTheme.darkTextSec,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (focus.pomodoroCount > 0)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                          colors: [Color(0xFFFFD700), Color(0xFFFF9F43)]),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('\uD83D\uDD25',
-                            style: TextStyle(fontSize: 12)),
-                        const SizedBox(width: 4),
-                        Text('${focus.pomodoroCount}',
-                            style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.black87)),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 24),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-            // -- Timer Display --
-            Center(
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF1E1E2E), Color(0xFF16161F)],
-                  ),
-                  border: Border.all(
-                      color: focus.focusLevel.color.withValues(alpha: 0.15),
-                      width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.4),
-                        blurRadius: 30,
-                        offset: const Offset(0, 10)),
-                    BoxShadow(
-                        color: focus.focusLevel.color.withValues(alpha: 0.08),
-                        blurRadius: 40,
-                        spreadRadius: 5),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('$_selectedMinutes',
-                        style: GoogleFonts.inter(
-                            fontSize: 52,
-                            fontWeight: FontWeight.w200,
-                            color: Colors.white)),
-                    Text('minutes',
-                        style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: AppTheme.darkTextSec,
-                            letterSpacing: 1)),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
+    // ── Adaptive colors ───────────────────────────────────────────────────
+    final bgColor      = isDark ? AppTheme.darkBg        : const Color(0xFFF0EFF8);
+    final textPrimary  = isDark ? Colors.white            : const Color(0xFF1A1A2E);
+    final textSec      = isDark ? AppTheme.darkTextSec    : Colors.grey.shade600;
+    final cardBg       = isDark ? AppTheme.darkSurface    : Colors.white;
+    final cardBorder   = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.grey.shade200;
+    final timerBg1     = isDark ? const Color(0xFF1E1E2E) : Colors.white;
+    final timerBg2     = isDark ? const Color(0xFF16161F) : const Color(0xFFF5F4FF);
+    final presetUnselBg = isDark
+        ? Colors.white.withValues(alpha: 0.04)
+        : Colors.grey.shade100;
+    final presetUnselBorder = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.grey.shade200;
 
-            // -- Time Presets --
-            Center(
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                alignment: WrapAlignment.center,
+    return Container(
+      color: bgColor,
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header ────────────────────────────────────────────────
+              Row(
                 children: [
-                  ..._presets.map((mins) {
-                    final isSelected = _selectedMinutes == mins;
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedMinutes = mins),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 10),
-                        decoration: BoxDecoration(
-                          gradient: isSelected
-                              ? LinearGradient(colors: [
-                                  focus.focusLevel.color,
-                                  focus.focusLevel.color.withValues(alpha: 0.7)
-                                ])
-                              : null,
-                          color: isSelected
-                              ? null
-                              : Colors.white.withValues(alpha: 0.04),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                              color: isSelected
-                                  ? Colors.transparent
-                                  : Colors.white.withValues(alpha: 0.06)),
-                        ),
-                        child: Text('$mins',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: isSelected
-                                  ? FontWeight.w800
-                                  : FontWeight.w600,
-                              color: isSelected
-                                  ? Colors.white
-                                  : AppTheme.darkTextSec,
-                            )),
-                      ),
-                    );
-                  }),
-                  GestureDetector(
-                    onTap: _showCustomDurationDialog,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.04),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                            color: AppTheme.gemColor.withValues(alpha: 0.2)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.tune_rounded,
-                              size: 14,
-                              color: AppTheme.gemColor.withValues(alpha: 0.7)),
-                          const SizedBox(width: 6),
-                          Text('Custom',
-                              style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.gemColor)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 28),
-
-            // -- FOCUS LEVEL SELECTOR --
-            Text('Focus Intensity',
-                style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: -0.2)),
-            const SizedBox(height: 4),
-            Text('Higher levels = more restrictions',
-                style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppTheme.darkTextSec,
-                    fontWeight: FontWeight.w500)),
-            const SizedBox(height: 14),
-
-            ...FocusLevel.values.map((level) => _buildLevelCard(focus, level)),
-
-            // -- Manage Blocked Apps (only for moderate) --
-            if (focus.focusLevel == FocusLevel.moderate) ...[
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const BlockedAppsScreen())),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.darkSurface,
-                    borderRadius: BorderRadius.circular(16),
-                    border:
-                        Border.all(color: Colors.white.withValues(alpha: 0.06)),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppTheme.errorColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.apps_rounded,
-                            color: AppTheme.errorColor, size: 20),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Manage Blocked Apps',
-                                style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white)),
-                            Text(
-                                '${focus.blockedApps.where((a) => a.isBlocked).length} apps + all social media',
-                                style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppTheme.darkTextSec)),
-                          ],
-                        ),
-                      ),
-                      Icon(Icons.chevron_right_rounded,
-                          color: Colors.white.withValues(alpha: 0.3), size: 22),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-
-            // -- Strict mode warning --
-            if (focus.focusLevel == FocusLevel.strict) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppTheme.errorColor.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                      color: AppTheme.errorColor.withValues(alpha: 0.2)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.warning_rounded,
-                            color: AppTheme.errorColor, size: 18),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                              'You will NOT be able to stop this session until the timer ends.',
-                              style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.errorColor)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // Emergency calls toggle
-                    Row(
-                      children: [
-                        const Icon(Icons.phone_rounded,
-                            color: Colors.white70, size: 18),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text('Allow emergency calls',
-                              style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white)),
-                        ),
-                        GestureDetector(
-                          onTap: () => focus.setAllowEmergencyCalls(
-                              !focus.allowEmergencyCalls),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            width: 46,
-                            height: 26,
-                            decoration: BoxDecoration(
-                              color: focus.allowEmergencyCalls
-                                  ? AppTheme.gemColor
-                                  : Colors.white.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(13),
-                            ),
-                            child: AnimatedAlign(
-                              duration: const Duration(milliseconds: 200),
-                              alignment: focus.allowEmergencyCalls
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
-                              child: Container(
-                                margin: const EdgeInsets.all(3),
-                                width: 20,
-                                height: 20,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(10),
-                                  boxShadow: [
-                                    BoxShadow(
-                                        color: Colors.black
-                                            .withValues(alpha: 0.15),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 1))
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 14),
-
-            // -- Breathing exercise toggle --
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: focus.showBreathing
-                    ? AppTheme.gemColor.withValues(alpha: 0.04)
-                    : AppTheme.darkSurface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                    color: focus.showBreathing
-                        ? AppTheme.gemColor.withValues(alpha: 0.15)
-                        : Colors.white.withValues(alpha: 0.04)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppTheme.gemColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.self_improvement_rounded,
-                        color: AppTheme.gemColor, size: 18),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Breathing Exercise',
-                            style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white)),
-                        Text('Calm before focusing',
-                            style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: AppTheme.darkTextSec)),
+                        Text(
+                          'Focus Mode',
+                          style: GoogleFonts.inter(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: textPrimary,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Choose intensity & start deep work',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: textSec,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () => focus.setShowBreathing(!focus.showBreathing),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 46,
-                      height: 26,
+                  if (focus.pomodoroCount > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: focus.showBreathing
-                            ? AppTheme.gemColor
-                            : Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(13),
+                        gradient: const LinearGradient(
+                            colors: [Color(0xFFFFD700), Color(0xFFFF9F43)]),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: AnimatedAlign(
-                        duration: const Duration(milliseconds: 200),
-                        alignment: focus.showBreathing
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.all(3),
-                          width: 20,
-                          height: 20,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('🔥', style: TextStyle(fontSize: 12)),
+                          const SizedBox(width: 4),
+                          Text('${focus.pomodoroCount}',
+                              style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.black87)),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // ── Timer Display ─────────────────────────────────────────
+              Center(
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [timerBg1, timerBg2],
+                    ),
+                    border: Border.all(
+                        color: focus.focusLevel.color.withValues(alpha: 0.2),
+                        width: 2),
+                    boxShadow: isDark
+                        ? [
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          blurRadius: 30,
+                          offset: const Offset(0, 10)),
+                      BoxShadow(
+                          color: focus.focusLevel.color
+                              .withValues(alpha: 0.08),
+                          blurRadius: 40,
+                          spreadRadius: 5),
+                    ]
+                        : [
+                      BoxShadow(
+                          color: focus.focusLevel.color
+                              .withValues(alpha: 0.15),
+                          blurRadius: 30,
+                          offset: const Offset(0, 8)),
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 20,
+                          offset: const Offset(0, 4)),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('$_selectedMinutes',
+                          style: GoogleFonts.inter(
+                              fontSize: 52,
+                              fontWeight: FontWeight.w200,
+                              color: textPrimary)),
+                      Text('minutes',
+                          style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: textSec,
+                              letterSpacing: 1)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // ── Time Presets ──────────────────────────────────────────
+              Center(
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    ..._presets.map((mins) {
+                      final isSelected = _selectedMinutes == mins;
+                      return GestureDetector(
+                        onTap: () => setState(() => _selectedMinutes = mins),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 18, vertical: 10),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 1))
-                            ],
+                            gradient: isSelected
+                                ? LinearGradient(colors: [
+                              focus.focusLevel.color,
+                              focus.focusLevel.color
+                                  .withValues(alpha: 0.7)
+                            ])
+                                : null,
+                            color: isSelected ? null : presetUnselBg,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                                color: isSelected
+                                    ? Colors.transparent
+                                    : presetUnselBorder),
                           ),
+                          child: Text('$mins',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: isSelected
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                                color: isSelected ? Colors.white : textSec,
+                              )),
+                        ),
+                      );
+                    }),
+                    GestureDetector(
+                      onTap: _showCustomDurationDialog,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.04)
+                              : AppTheme.gemColor.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                              color:
+                              AppTheme.gemColor.withValues(alpha: 0.25)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.tune_rounded,
+                                size: 14,
+                                color: AppTheme.gemColor
+                                    .withValues(alpha: 0.8)),
+                            const SizedBox(width: 6),
+                            Text('Custom',
+                                style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.gemColor)),
+                          ],
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(height: 28),
 
-            const SizedBox(height: 20),
+              // ── Focus Level Selector ──────────────────────────────────
+              Text('Focus Intensity',
+                  style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                      letterSpacing: -0.2)),
+              const SizedBox(height: 4),
+              Text('Higher levels = more restrictions',
+                  style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: textSec,
+                      fontWeight: FontWeight.w500)),
+              const SizedBox(height: 14),
 
-            // -- START BUTTON --
-            GestureDetector(
-              onTap: () => _handleStartFocus(focus),
-              child: Container(
-                width: double.infinity,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      focus.focusLevel.color,
-                      focus.focusLevel.color.withValues(alpha: 0.7)
+              ...FocusLevel.values.map((level) =>
+                  _buildLevelCard(focus, level, isDark, textPrimary, textSec,
+                      cardBg, cardBorder)),
+
+              // ── Manage Blocked Apps ───────────────────────────────────
+              if (focus.focusLevel == FocusLevel.moderate) ...[
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const BlockedAppsScreen())),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: cardBorder),
+                      boxShadow: isDark
+                          ? []
+                          : [
+                        BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3))
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppTheme.errorColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.apps_rounded,
+                              color: AppTheme.errorColor, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Manage Blocked Apps',
+                                  style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: textPrimary)),
+                              Text(
+                                  '${focus.blockedApps.where((a) => a.isBlocked).length} apps + all social media',
+                                  style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: textSec)),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.chevron_right_rounded,
+                            color: textSec, size: 22),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+
+              // ── Strict mode warning ───────────────────────────────────
+              if (focus.focusLevel == FocusLevel.strict) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.errorColor.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                        color: AppTheme.errorColor.withValues(alpha: 0.25)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.warning_rounded,
+                              color: AppTheme.errorColor, size: 18),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                                'You will NOT be able to stop this session until the timer ends.',
+                                style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.errorColor)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Icon(Icons.phone_rounded,
+                              color: textPrimary, size: 18),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text('Allow emergency calls',
+                                style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: textPrimary)),
+                          ),
+                          _toggle(
+                            value: focus.allowEmergencyCalls,
+                            onTap: () => focus.setAllowEmergencyCalls(
+                                !focus.allowEmergencyCalls),
+                            activeColor: AppTheme.gemColor,
+                            isDark: isDark,
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
+                ),
+              ],
+
+              const SizedBox(height: 14),
+
+              // ── Breathing exercise toggle ─────────────────────────────
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: focus.showBreathing
+                      ? AppTheme.gemColor.withValues(
+                      alpha: isDark ? 0.04 : 0.06)
+                      : cardBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: focus.showBreathing
+                        ? AppTheme.gemColor.withValues(alpha: 0.2)
+                        : cardBorder,
+                  ),
+                  boxShadow: isDark
+                      ? []
+                      : [
                     BoxShadow(
-                        color: focus.focusLevel.color.withValues(alpha: 0.3),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6))
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2))
                   ],
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(focus.focusLevel.icon, color: Colors.white, size: 20),
-                    const SizedBox(width: 10),
-                    Text('Start ${focus.focusLevel.label}',
-                        style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: 0.5)),
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppTheme.gemColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.self_improvement_rounded,
+                          color: AppTheme.gemColor, size: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Breathing Exercise',
+                              style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: textPrimary)),
+                          Text('Calm before focusing',
+                              style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: textSec)),
+                        ],
+                      ),
+                    ),
+                    _toggle(
+                      value: focus.showBreathing,
+                      onTap: () =>
+                          focus.setShowBreathing(!focus.showBreathing),
+                      activeColor: AppTheme.gemColor,
+                      isDark: isDark,
+                    ),
                   ],
                 ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 20),
+
+              // ── Start Button ──────────────────────────────────────────
+              GestureDetector(
+                onTap: () => _handleStartFocus(focus),
+                child: Container(
+                  width: double.infinity,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        focus.focusLevel.color,
+                        focus.focusLevel.color.withValues(alpha: 0.75)
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                          color: focus.focusLevel.color
+                              .withValues(alpha: isDark ? 0.3 : 0.35),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6))
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(focus.focusLevel.icon,
+                          color: Colors.white, size: 20),
+                      const SizedBox(width: 10),
+                      Text('Start ${focus.focusLevel.label}',
+                          style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.5)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // -- Focus Level Card --
-  Widget _buildLevelCard(FocusProvider focus, FocusLevel level) {
+  // ── Focus Level Card ───────────────────────────────────────────────────
+  Widget _buildLevelCard(
+      FocusProvider focus,
+      FocusLevel level,
+      bool isDark,
+      Color textPrimary,
+      Color textSec,
+      Color cardBg,
+      Color cardBorder,
+      ) {
     final isSelected = focus.focusLevel == level;
     return GestureDetector(
       onTap: () => focus.setFocusLevel(level),
@@ -550,19 +556,28 @@ class _FocusScreenState extends State<FocusScreen>
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? level.color.withValues(alpha: 0.08)
-              : AppTheme.darkSurface,
+              ? level.color.withValues(alpha: isDark ? 0.08 : 0.06)
+              : cardBg,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isSelected
                 ? level.color.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.04),
+                : cardBorder,
             width: isSelected ? 1.5 : 1,
           ),
+          boxShadow: isDark
+              ? []
+              : [
+            BoxShadow(
+                color: isSelected
+                    ? level.color.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3))
+          ],
         ),
         child: Row(
           children: [
-            // Level icon
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 48,
@@ -570,7 +585,9 @@ class _FocusScreenState extends State<FocusScreen>
               decoration: BoxDecoration(
                 color: isSelected
                     ? level.color.withValues(alpha: 0.15)
-                    : Colors.white.withValues(alpha: 0.04),
+                    : isDark
+                    ? Colors.white.withValues(alpha: 0.04)
+                    : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                     color: isSelected
@@ -578,8 +595,7 @@ class _FocusScreenState extends State<FocusScreen>
                         : Colors.transparent),
               ),
               child: Icon(level.icon,
-                  color: isSelected ? level.color : AppTheme.darkTextSec,
-                  size: 22),
+                  color: isSelected ? level.color : textSec, size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -592,7 +608,7 @@ class _FocusScreenState extends State<FocusScreen>
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
-                            color: isSelected ? level.color : Colors.white,
+                            color: isSelected ? level.color : textPrimary,
                           )),
                       if (level == FocusLevel.moderate) ...[
                         const SizedBox(width: 8),
@@ -600,7 +616,8 @@ class _FocusScreenState extends State<FocusScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppTheme.gemColor.withValues(alpha: 0.15),
+                            color:
+                            AppTheme.gemColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text('Recommended',
@@ -617,11 +634,10 @@ class _FocusScreenState extends State<FocusScreen>
                       style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: AppTheme.darkTextSec)),
+                          color: textSec)),
                 ],
               ),
             ),
-            // Radio indicator
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 22,
@@ -632,16 +648,63 @@ class _FocusScreenState extends State<FocusScreen>
                 border: Border.all(
                   color: isSelected
                       ? level.color
-                      : Colors.white.withValues(alpha: 0.15),
+                      : isDark
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : Colors.grey.shade300,
                   width: isSelected ? 0 : 2,
                 ),
               ),
               child: isSelected
                   ? const Icon(Icons.check_rounded,
-                      color: Colors.white, size: 14)
+                  color: Colors.white, size: 14)
                   : null,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // ── Reusable custom toggle ────────────────────────────────────────────
+  Widget _toggle({
+    required bool value,
+    required VoidCallback onTap,
+    required Color activeColor,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 46,
+        height: 26,
+        decoration: BoxDecoration(
+          color: value
+              ? activeColor
+              : isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(13),
+        ),
+        child: AnimatedAlign(
+          duration: const Duration(milliseconds: 200),
+          alignment:
+          value ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            margin: const EdgeInsets.all(3),
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1))
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -656,15 +719,14 @@ class _FocusScreenState extends State<FocusScreen>
                 style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
             backgroundColor: AppTheme.errorColor,
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
       return;
     }
 
-    // Permissions check for moderate/deep/strict
     if (focus.focusLevel != FocusLevel.light) {
       await focus.checkPermissions();
       if (!mounted) return;
@@ -674,14 +736,13 @@ class _FocusScreenState extends State<FocusScreen>
       }
     }
 
-    // Strict mode confirmation
     if (focus.focusLevel == FocusLevel.strict) {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: const Color(0xFF1E1E2E),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20)),
           title: Row(
             children: [
               const Icon(Icons.warning_rounded,
@@ -694,13 +755,15 @@ class _FocusScreenState extends State<FocusScreen>
           ),
           content: Text(
             'You will NOT be able to stop this $_selectedMinutes-minute session until it ends.\n\nAll apps will be blocked. ${focus.allowEmergencyCalls ? "Only phone calls will work." : "No exceptions."}\n\nAre you sure?',
-            style: GoogleFonts.inter(color: AppTheme.darkTextSec, height: 1.5),
+            style: GoogleFonts.inter(
+                color: AppTheme.darkTextSec, height: 1.5),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text('Cancel',
-                  style: GoogleFonts.inter(color: AppTheme.darkTextSec)),
+                  style:
+                  GoogleFonts.inter(color: AppTheme.darkTextSec)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
@@ -743,7 +806,8 @@ class _FocusScreenState extends State<FocusScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E2E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
         title: Text('Permissions Required',
             style: GoogleFonts.inter(
                 fontWeight: FontWeight.w800, color: Colors.white)),
@@ -755,7 +819,8 @@ class _FocusScreenState extends State<FocusScreen>
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Cancel',
-                style: GoogleFonts.inter(color: AppTheme.darkTextSec)),
+                style:
+                GoogleFonts.inter(color: AppTheme.darkTextSec)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -774,7 +839,8 @@ class _FocusScreenState extends State<FocusScreen>
             ),
             child: Text('Grant',
                 style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w700, color: Colors.black)),
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black)),
           ),
         ],
       ),
@@ -782,29 +848,37 @@ class _FocusScreenState extends State<FocusScreen>
   }
 
   Future<void> _showCustomDurationDialog() async {
-    final controller = TextEditingController(text: _selectedMinutes.toString());
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1E1E2E) : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textSecColor =
+    isDark ? AppTheme.darkTextSec : Colors.grey.shade600;
+
+    final controller =
+    TextEditingController(text: _selectedMinutes.toString());
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: bgColor,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
         title: Text('Custom Duration',
             style: GoogleFonts.inter(
-                fontWeight: FontWeight.w800, color: Colors.white)),
+                fontWeight: FontWeight.w800, color: textColor)),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
-          style: GoogleFonts.inter(color: Colors.white),
+          style: GoogleFonts.inter(color: textColor),
           decoration: InputDecoration(
-            labelText: 'Minutes (1\u20131440)',
-            labelStyle: GoogleFonts.inter(color: AppTheme.darkTextSec),
+            labelText: 'Minutes (1–1440)',
+            labelStyle: GoogleFonts.inter(color: textSecColor),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Cancel',
-                style: GoogleFonts.inter(color: AppTheme.darkTextSec)),
+                style: GoogleFonts.inter(color: textSecColor)),
           ),
           TextButton(
             onPressed: () {
@@ -816,7 +890,8 @@ class _FocusScreenState extends State<FocusScreen>
             },
             child: Text('Set',
                 style: GoogleFonts.inter(
-                    color: AppTheme.primaryColor, fontWeight: FontWeight.w700)),
+                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -824,7 +899,7 @@ class _FocusScreenState extends State<FocusScreen>
   }
 
   // ===========================================
-  //  ACTIVE FOCUS SCREEN
+  //  ACTIVE FOCUS SCREEN — dark only (full immersion)
   // ===========================================
   Widget _buildActiveFocus(FocusProvider focus, GameProvider game) {
     final quoteIndex = (focus.remainingSeconds ~/ 30) % _quotes.length;
@@ -841,7 +916,8 @@ class _FocusScreenState extends State<FocusScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Focus session is running.',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                  style:
+                  GoogleFonts.inter(fontWeight: FontWeight.w600)),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
@@ -861,10 +937,9 @@ class _FocusScreenState extends State<FocusScreen>
             bottom: false,
             child: Column(
               children: [
-                // -- Top Bar --
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 12),
                   child: Row(
                     children: [
                       Text('Deep Focus',
@@ -876,14 +951,14 @@ class _FocusScreenState extends State<FocusScreen>
                       if (focus.isPaused)
                         _statusBadge('PAUSED', AppTheme.warningColor)
                       else
-                        _statusBadge(level.label.toUpperCase(), level.color),
+                        _statusBadge(
+                            level.label.toUpperCase(), level.color),
                     ],
                   ),
                 ),
 
                 const Spacer(flex: 2),
 
-                // -- Circular Timer --
                 Stack(
                   alignment: Alignment.center,
                   children: [
@@ -906,7 +981,10 @@ class _FocusScreenState extends State<FocusScreen>
                         gradient: const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [Color(0xFF1E1E2E), Color(0xFF12121A)],
+                          colors: [
+                            Color(0xFF1E1E2E),
+                            Color(0xFF12121A)
+                          ],
                         ),
                         border: Border.all(
                             color: Colors.white.withValues(alpha: 0.04)),
@@ -945,7 +1023,6 @@ class _FocusScreenState extends State<FocusScreen>
 
                 const Spacer(flex: 1),
 
-                // -- Quote --
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: AnimatedSwitcher(
@@ -965,22 +1042,22 @@ class _FocusScreenState extends State<FocusScreen>
 
                 const Spacer(flex: 1),
 
-                // -- Controls --
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(32, 32, 32, 100),
+                  padding:
+                  const EdgeInsets.fromLTRB(32, 32, 32, 100),
                   decoration: BoxDecoration(
                     color: const Color(0xFF16161F),
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(32)),
+                    borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(32)),
                     border: Border(
                         top: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.04))),
+                            color:
+                            Colors.white.withValues(alpha: 0.04))),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      // Pause/Resume (not available in strict)
                       if (!focus.isStrictMode)
                         _controlButton(
                           icon: focus.isPaused
@@ -993,16 +1070,15 @@ class _FocusScreenState extends State<FocusScreen>
                               ? focus.resumeFocusSession
                               : focus.pauseFocusSession,
                         ),
-                      // Stop (not available in strict)
                       if (!focus.isStrictMode)
                         _controlButton(
                           icon: Icons.stop_rounded,
                           label: 'End',
                           color: AppTheme.errorColor,
                           isActive: false,
-                          onTap: () => _showStopDialog(context, focus),
+                          onTap: () =>
+                              _showStopDialog(context, focus),
                         ),
-                      // Level badge
                       _controlButton(
                         icon: level.icon,
                         label: level.label.split(' ').first,
@@ -1010,12 +1086,11 @@ class _FocusScreenState extends State<FocusScreen>
                         isActive: true,
                         onTap: () {},
                       ),
-                      // DND indicator
                       _controlButton(
                         icon: Icons.do_not_disturb_on_rounded,
                         label: 'DND',
                         color: AppTheme.accentPurple,
-                        isActive: true,
+                        isActive: focus.enableDND,
                         onTap: () {},
                       ),
                     ],
@@ -1070,7 +1145,9 @@ class _FocusScreenState extends State<FocusScreen>
                       : Colors.white.withValues(alpha: 0.06)),
             ),
             child: Icon(icon,
-                color: isActive ? color : Colors.white.withValues(alpha: 0.5),
+                color: isActive
+                    ? color
+                    : Colors.white.withValues(alpha: 0.5),
                 size: 24),
           ),
           const SizedBox(height: 8),
@@ -1078,7 +1155,8 @@ class _FocusScreenState extends State<FocusScreen>
               style: GoogleFonts.inter(
                 color: isActive ? color : AppTheme.darkTextSec,
                 fontSize: 11,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                fontWeight:
+                isActive ? FontWeight.w700 : FontWeight.w500,
               )),
         ],
       ),
@@ -1086,7 +1164,7 @@ class _FocusScreenState extends State<FocusScreen>
   }
 
   // ===========================================
-  //  BREAK SCREEN
+  //  BREAK SCREEN — dark only
   // ===========================================
   Widget _buildBreakScreen(FocusProvider focus) {
     return Container(
@@ -1103,7 +1181,7 @@ class _FocusScreenState extends State<FocusScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('\u2615', style: TextStyle(fontSize: 56)),
+            const Text('☕', style: TextStyle(fontSize: 56)),
             const SizedBox(height: 16),
             Text('Break Time',
                 style: GoogleFonts.inter(
@@ -1134,13 +1212,13 @@ class _FocusScreenState extends State<FocusScreen>
             GestureDetector(
               onTap: () => focus.skipBreak(),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(14),
-                  border:
-                      Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08)),
                 ),
                 child: Text('Skip Break',
                     style: GoogleFonts.inter(
@@ -1160,20 +1238,23 @@ class _FocusScreenState extends State<FocusScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E2E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
         title: Text('End Session?',
             style: GoogleFonts.inter(
                 fontWeight: FontWeight.w800, color: Colors.white)),
         content: Text(
-          'Ending early will cost you HP and you won\'t receive Gold or XP rewards.',
-          style: GoogleFonts.inter(color: AppTheme.darkTextSec, height: 1.4),
+          "Ending early will cost you HP and you won't receive Gold or XP rewards.",
+          style: GoogleFonts.inter(
+              color: AppTheme.darkTextSec, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Keep Going',
                 style: GoogleFonts.inter(
-                    color: AppTheme.primaryColor, fontWeight: FontWeight.w700)),
+                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.w700)),
           ),
           TextButton(
             onPressed: () {
@@ -1183,7 +1264,8 @@ class _FocusScreenState extends State<FocusScreen>
             },
             child: Text('End Session',
                 style: GoogleFonts.inter(
-                    color: AppTheme.errorColor, fontWeight: FontWeight.w700)),
+                    color: AppTheme.errorColor,
+                    fontWeight: FontWeight.w700)),
           ),
         ],
       ),

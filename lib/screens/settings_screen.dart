@@ -520,7 +520,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                 ),
+
                 Divider(height: 1, color: dividerColor),
+
                 SwitchListTile(
                   value: _notificationsEnabled,
                   onChanged: (v) async {
@@ -542,9 +544,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   secondary: Icon(
                       Icons.notifications_active_rounded,
                       color: iconColor),
-                  activeColor: AppTheme.primaryColor,
+                  activeColor: isDark?  AppTheme.primaryColor : Colors.teal,
                 ),
+
                 Divider(height: 1, color: dividerColor),
+
                 SwitchListTile(
                   value: _hapticsEnabled,
                   onChanged: (v) async {
@@ -565,7 +569,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: TextStyle(color: textSecColor)),
                   secondary: Icon(Icons.vibration_rounded,
                       color: iconColor),
-                  activeThumbColor: AppTheme.primaryColor,
+                  activeThumbColor: isDark?  AppTheme.primaryColor : Colors.teal,
                 ),
               ],
             ),
@@ -599,7 +603,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: TextStyle(color: textSecColor)),
                   secondary: Icon(Icons.lock_clock_rounded,
                       color: iconColor),
-                  activeColor: AppTheme.primaryColor,
+                  activeColor: isDark?  AppTheme.primaryColor : Colors.teal,
                 ),
                 Divider(height: 1, color: dividerColor),
                 SwitchListTile(
@@ -619,7 +623,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: TextStyle(color: textSecColor)),
                   secondary: Icon(Icons.block_rounded,
                       color: iconColor),
-                  activeColor: AppTheme.primaryColor,
+                  activeColor: isDark?  AppTheme.primaryColor : Colors.teal,
                 ),
                 Divider(height: 1, color: dividerColor),
                 SwitchListTile(
@@ -640,7 +644,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   secondary: Icon(
                       Icons.do_not_disturb_alt_rounded,
                       color: iconColor),
-                  activeColor: AppTheme.primaryColor,
+                  activeColor: isDark?  AppTheme.primaryColor : Colors.teal,
                 ),
                 Divider(height: 1, color: dividerColor),
                 _sliderTile(
@@ -746,7 +750,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: TextStyle(color: textSecColor)),
                   secondary: Icon(Icons.widgets_rounded,
                       color: iconColor),
-                  activeColor: AppTheme.primaryColor,
+                  activeColor: isDark?  AppTheme.primaryColor : Colors.teal,
                 ),
                 Divider(height: 1, color: dividerColor),
                 ListTile(
@@ -770,10 +774,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ScaffoldMessenger.of(context);
                     await fp.refreshHomeWidget();
                     if (!context.mounted) return;
-                    messenger.showSnackBar(SnackBar(
-                        content: Text(locale.isBengali
-                            ? 'উইজেট রিফ্রেশ হয়েছে'
-                            : 'Widget refreshed')));
+                    _showErrorSnackbar(locale.isBengali
+                        ? 'উইজেট রিফ্রেশ হয়েছে'
+                        : 'Widget refreshed');
                   },
                 ),
               ],
