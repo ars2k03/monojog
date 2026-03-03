@@ -16,6 +16,40 @@ class _BrainDumpScreenState extends State<BrainDumpScreen> {
   final _textController = TextEditingController();
   String _selectedType = 'general';
 
+  // ── Adaptive helpers ────────────────────────────────────────────────────
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get _bg =>
+      _isDark ? AppTheme.darkBg : const Color(0xFFF0F4F8);
+
+  Color get _cardBg =>
+      _isDark ? AppTheme.darkCard : Colors.white;
+
+  Color get _textPrimary =>
+      _isDark ? Colors.white : const Color(0xFF0D1117);
+
+  Color get _textSec =>
+      _isDark ? AppTheme.darkTextSec : const Color(0xFF5A6070);
+
+  Color get _borderColor =>
+      _isDark
+          ? Colors.white.withValues(alpha: 0.07)
+          : Colors.black.withValues(alpha: 0.08);
+
+  Color get _inputFill =>
+      _isDark ? AppTheme.darkBg : const Color(0xFFF0F4F8);
+
+  List<BoxShadow> get _cardShadow => _isDark
+      ? []
+      : [
+    BoxShadow(
+        color: Colors.black.withValues(alpha: 0.06),
+        blurRadius: 10,
+        offset: const Offset(0, 3))
+  ];
+
+  // ────────────────────────────────────────────────────────────────────────
+
   @override
   void dispose() {
     _textController.dispose();
@@ -32,52 +66,72 @@ class _BrainDumpScreenState extends State<BrainDumpScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-          content: Text('Note saved!'), backgroundColor: AppTheme.successColor),
+        content: Text('Note saved!',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        backgroundColor: AppTheme.successColor,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
+      backgroundColor: _bg,
       appBar: AppBar(
-        title: const Text('Brain Dump',
-            style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+        title: Text(
+          'Brain Dump',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.5,
+            color: _textPrimary,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: IconThemeData(color: _textPrimary),
       ),
       body: Column(
         children: [
-          // Input Area
-          NeuContainer(
+          // ── Input Area ──────────────────────────────────────────────────
+          Container(
+            decoration: BoxDecoration(
+              color: _cardBg,
+              boxShadow: _cardShadow,
+            ),
             padding: const EdgeInsets.all(20),
-            borderRadius: BorderRadius.circular(0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Write down all your thoughts here before focusing.',
                   style: TextStyle(
-                      color: AppTheme.darkTextSec,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600),
+                    color: _textSec,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _textController,
                   maxLines: 4,
                   minLines: 2,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: _textPrimary,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'What are you thinking?',
-                    hintStyle: TextStyle(
-                        color: AppTheme.darkTextSec.withValues(alpha: 0.8)),
+                    hintStyle: TextStyle(color: _textSec),
                     filled: true,
-                    fillColor: isDark ? AppTheme.darkBg : AppTheme.lightBg,
+                    fillColor: _inputFill,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20),
                       borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: _borderColor),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20),
@@ -98,13 +152,14 @@ class _BrainDumpScreenState extends State<BrainDumpScreen> {
                       onPressed: _saveDump,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 24, vertical: 12),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24)),
                         elevation: 4,
                         shadowColor:
-                            AppTheme.primaryColor.withValues(alpha: 0.4),
+                        AppTheme.primaryColor.withValues(alpha: 0.4),
                       ),
                       child: const Text('Save',
                           style: TextStyle(
@@ -116,7 +171,7 @@ class _BrainDumpScreenState extends State<BrainDumpScreen> {
             ),
           ),
 
-          // List Area
+          // ── List Area ───────────────────────────────────────────────────
           Expanded(
             child: Consumer<GameProvider>(
               builder: (ctx, game, _) {
@@ -127,13 +182,13 @@ class _BrainDumpScreenState extends State<BrainDumpScreen> {
                       children: [
                         Icon(Icons.psychology_rounded,
                             size: 64,
-                            color: AppTheme.darkTextSec.withValues(alpha: 0.5)),
+                            color: _textSec.withValues(alpha: 0.5)),
                         const SizedBox(height: 16),
-                        const Text('No Notes',
+                        Text('No Notes',
                             style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.darkTextSec)),
+                                color: _textSec)),
                       ],
                     ),
                   );
@@ -146,29 +201,40 @@ class _BrainDumpScreenState extends State<BrainDumpScreen> {
                     final dump = game.brainDumps[i];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16),
-                      child: NeuContainer(
+                      child: Container(
                         padding: const EdgeInsets.all(20),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                            color:
-                                AppTheme.primaryColor.withValues(alpha: 0.15),
-                            width: 1.5),
+                        decoration: BoxDecoration(
+                          color: _cardBg,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                            width: 1.5,
+                          ),
+                          boxShadow: _cardShadow,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
                               children: [
+                                // Type badge
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
                                     color: dump.type == 'pre_focus'
                                         ? AppTheme.accentPurple
-                                            .withValues(alpha: 0.15)
-                                        : AppTheme.darkTextSec
-                                            .withValues(alpha: 0.15),
+                                        .withValues(alpha: 0.12)
+                                        : _textSec.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: dump.type == 'pre_focus'
+                                          ? AppTheme.accentPurple
+                                          .withValues(alpha: 0.3)
+                                          : _borderColor,
+                                    ),
                                   ),
                                   child: Text(
                                     dump.type == 'pre_focus'
@@ -180,26 +246,31 @@ class _BrainDumpScreenState extends State<BrainDumpScreen> {
                                       letterSpacing: 0.5,
                                       color: dump.type == 'pre_focus'
                                           ? AppTheme.accentPurple
-                                          : AppTheme.darkTextSec,
+                                          : _textSec,
                                     ),
                                   ),
                                 ),
+                                // Date
                                 Text(
                                   DateFormat('dd MMM, hh:mm a')
                                       .format(dump.createdAt),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 12,
-                                      color: AppTheme.darkTextSec,
+                                      color: _textSec,
                                       fontWeight: FontWeight.w600),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 16),
-                            Text(dump.text,
-                                style: const TextStyle(
-                                    fontSize: 16,
-                                    height: 1.5,
-                                    fontWeight: FontWeight.w500)),
+                            Text(
+                              dump.text,
+                              style: TextStyle(
+                                fontSize: 16,
+                                height: 1.5,
+                                fontWeight: FontWeight.w500,
+                                color: _textPrimary,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -220,16 +291,17 @@ class _BrainDumpScreenState extends State<BrainDumpScreen> {
       onTap: () => setState(() => _selectedType = type),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primaryColor.withValues(alpha: 0.15)
+              ? AppTheme.primaryColor.withValues(alpha: 0.12)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? AppTheme.primaryColor
-                : AppTheme.darkTextSec.withValues(alpha: 0.4),
+                : _textSec.withValues(alpha: 0.4),
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -237,8 +309,9 @@ class _BrainDumpScreenState extends State<BrainDumpScreen> {
           label,
           style: TextStyle(
             fontSize: 13,
-            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-            color: isSelected ? AppTheme.primaryColor : AppTheme.darkTextSec,
+            fontWeight:
+            isSelected ? FontWeight.w800 : FontWeight.w600,
+            color: isSelected ? AppTheme.primaryColor : _textSec,
           ),
         ),
       ),

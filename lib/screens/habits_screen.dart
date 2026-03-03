@@ -7,15 +7,61 @@ import 'package:monojog/providers/game_provider.dart';
 import 'package:monojog/screens/habit_detail_screen.dart';
 import 'package:monojog/widgets/add_habit_sheet.dart';
 
-// ── Color constants ──
+/// Adaptive color palette — works for both light and dark mode.
 class _HC {
-  static const bg = Color(0xFF0A0A0F);
-  static const card = Color(0xFF14141C);
-  static const textSec = Color(0xFF8B8FA3);
-  static const mint = Color(0xFF00E5A0);
+  // ── Fixed brand / accent colors ──
+  static const mint = Color(0xFF00BFA5);
   static const purple = Color(0xFF7C4DFF);
-  static const gold = Color(0xFFFFD700);
-  static const red = Color(0xFFFF4D6D);
+  static const gold = Color(0xFFF9A825);
+  static const red = Color(0xFFE53935);
+
+  // ── Semantic tokens resolved at runtime ──────────────────────────────────
+  static Color bg(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? const Color(0xFF0A0A0F)
+          : const Color(0xFFF0F4F8);
+
+  static Color card(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? const Color(0xFF14141C)
+          : const Color(0xFFFFFFFF);
+
+  static Color cardAlt(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? const Color(0xFF1E1E2A)
+          : const Color(0xFFE8EEF5);
+
+  static Color textPrimary(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? Colors.white
+          : const Color(0xFF0D1117);
+
+  static Color textSec(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? const Color(0xFF8B8FA3)
+          : const Color(0xFF5A6070);
+
+  static Color border(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? Colors.white.withValues(alpha: 0.04)
+          : Colors.black.withValues(alpha: 0.07);
+
+  static Color surface(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? Colors.white.withValues(alpha: 0.04)
+          : Colors.black.withValues(alpha: 0.04);
+
+  static bool isDark(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark;
+
+  static List<BoxShadow> shadow(BuildContext ctx) => isDark(ctx)
+      ? []
+      : [
+    BoxShadow(
+        color: Colors.black.withValues(alpha: 0.06),
+        blurRadius: 10,
+        offset: const Offset(0, 3))
+  ];
 }
 
 Color _hex(String hex) {
@@ -52,7 +98,7 @@ class _HabitsScreenState extends State<HabitsScreen>
   Widget build(BuildContext context) {
     return Consumer2<HabitProvider, GameProvider>(
       builder: (ctx, habits, game, _) => Scaffold(
-        backgroundColor: _HC.bg,
+        backgroundColor: _HC.bg(context),
         body: SafeArea(
           child: Column(
             children: [
@@ -64,16 +110,17 @@ class _HabitsScreenState extends State<HabitsScreen>
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
-                  color: _HC.card,
+                  color: _HC.card(context),
                   borderRadius: BorderRadius.circular(14),
+                  boxShadow: _HC.shadow(context),
                 ),
                 child: TabBar(
                   controller: _tabCtrl,
                   indicator: BoxDecoration(
-                    color: _HC.purple.withValues(alpha: 0.15),
+                    color: _HC.purple.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(14),
-                    border:
-                        Border.all(color: _HC.purple.withValues(alpha: 0.3)),
+                    border: Border.all(
+                        color: _HC.purple.withValues(alpha: 0.3)),
                   ),
                   indicatorSize: TabBarIndicatorSize.tab,
                   dividerColor: Colors.transparent,
@@ -82,7 +129,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                   unselectedLabelStyle: GoogleFonts.inter(
                       fontSize: 13, fontWeight: FontWeight.w500),
                   labelColor: _HC.purple,
-                  unselectedLabelColor: _HC.textSec,
+                  unselectedLabelColor: _HC.textSec(context),
                   tabs: [
                     Tab(text: 'Today (${habits.scheduledTodayCount()})'),
                     const Tab(text: 'All Habits'),
@@ -105,15 +152,16 @@ class _HabitsScreenState extends State<HabitsScreen>
         floatingActionButton: FloatingActionButton(
           onPressed: () => _showAddSheet(context),
           backgroundColor: _HC.purple,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16)),
+          child:
+          const Icon(Icons.add_rounded, color: Colors.white, size: 28),
         ),
       ),
     );
   }
 
-  // ── Header ──
+  // ── Header ──────────────────────────────────────────────────────────────
   Widget _buildHeader(HabitProvider habits) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
@@ -125,12 +173,13 @@ class _HabitsScreenState extends State<HabitsScreen>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: _HC.card,
+                color: _HC.card(context),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
+                border: Border.all(color: _HC.border(context)),
+                boxShadow: _HC.shadow(context),
               ),
-              child: const Icon(Icons.arrow_back_rounded,
-                  color: Colors.white, size: 20),
+              child: Icon(Icons.arrow_back_rounded,
+                  color: _HC.textPrimary(context), size: 20),
             ),
           ),
           const SizedBox(width: 14),
@@ -142,26 +191,28 @@ class _HabitsScreenState extends State<HabitsScreen>
                     style: GoogleFonts.inter(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
-                        color: Colors.white,
+                        color: _HC.textPrimary(context),
                         letterSpacing: -0.5)),
                 Text('${habits.activeCount} habits tracked',
                     style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: _HC.textSec)),
+                        color: _HC.textSec(context))),
               ],
             ),
           ),
-          // Template packs button
           GestureDetector(
             onTap: () => _showTemplatePacks(context, habits),
             child: Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: _HC.gold.withValues(alpha: 0.08),
+                color: _HC.gold.withValues(
+                    alpha: _HC.isDark(context) ? 0.08 : 0.3),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _HC.gold.withValues(alpha: 0.2)),
+                border: Border.all(
+                    color: _HC.gold.withValues(alpha: 0.3)),
+                boxShadow: _HC.shadow(context),
               ),
               child: const Icon(Icons.auto_awesome_rounded,
                   color: _HC.gold, size: 20),
@@ -172,7 +223,7 @@ class _HabitsScreenState extends State<HabitsScreen>
     );
   }
 
-  // ── Today Progress Ring ──
+  // ── Today Progress Ring ─────────────────────────────────────────────────
   Widget _buildTodayProgress(HabitProvider habits) {
     final done = habits.completedTodayCount();
     final total = habits.scheduledTodayCount();
@@ -186,17 +237,24 @@ class _HabitsScreenState extends State<HabitsScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
+            colors: _HC.isDark(context)
+                ? [
               _HC.purple.withValues(alpha: 0.08),
+              _HC.mint.withValues(alpha: 0.04),
+            ]
+                : [
+              _HC.purple.withValues(alpha: 0.06),
               _HC.mint.withValues(alpha: 0.04),
             ],
           ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
+          border: Border.all(
+              color: _HC.purple.withValues(
+                  alpha: _HC.isDark(context) ? 0.1 : 0.2)),
+          boxShadow: _HC.shadow(context),
         ),
         child: Row(
           children: [
-            // Progress ring
             SizedBox(
               width: 64,
               height: 64,
@@ -205,7 +263,9 @@ class _HabitsScreenState extends State<HabitsScreen>
                 children: [
                   CircularProgressIndicator(
                     value: pct,
-                    backgroundColor: Colors.white.withValues(alpha: 0.06),
+                    backgroundColor: _HC.isDark(context)
+                        ? Colors.white.withValues(alpha: 0.06)
+                        : Colors.black.withValues(alpha: 0.06),
                     valueColor: AlwaysStoppedAnimation(
                         pct >= 1.0 ? _HC.gold : _HC.mint),
                     strokeWidth: 6,
@@ -217,7 +277,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                       style: GoogleFonts.inter(
                         fontSize: pct >= 1.0 ? 22 : 16,
                         fontWeight: FontWeight.w900,
-                        color: Colors.white,
+                        color: _HC.textPrimary(context),
                       ),
                     ),
                   ),
@@ -236,13 +296,13 @@ class _HabitsScreenState extends State<HabitsScreen>
                       style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
-                          color: Colors.white)),
+                          color: _HC.textPrimary(context))),
                   const SizedBox(height: 4),
                   Text('$done of $total habits completed',
                       style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: _HC.textSec)),
+                          color: _HC.textSec(context))),
                 ],
               ),
             ),
@@ -252,17 +312,17 @@ class _HabitsScreenState extends State<HabitsScreen>
     );
   }
 
-  // ── Week Day Headers ──
+  // ── Week Day Headers ────────────────────────────────────────────────────
   Widget _buildWeekDayRow() {
     const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     final now = DateTime.now();
-    final todayIdx = now.weekday - 1; // 0=Mon
+    final todayIdx = now.weekday - 1;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
-          const SizedBox(width: 44), // avatar space
+          const SizedBox(width: 44),
           ...List.generate(7, (i) {
             final date = _weekStart.add(Duration(days: i));
             final isToday = i == todayIdx;
@@ -274,7 +334,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: isToday ? _HC.purple : _HC.textSec,
+                      color: isToday ? _HC.purple : _HC.textSec(context),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -286,7 +346,8 @@ class _HabitsScreenState extends State<HabitsScreen>
                       fontWeight: FontWeight.w600,
                       color: isToday
                           ? _HC.purple
-                          : _HC.textSec.withValues(alpha: 0.5),
+                          : _HC.textSec(context)
+                          .withValues(alpha: 0.6),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -294,17 +355,17 @@ class _HabitsScreenState extends State<HabitsScreen>
               ),
             );
           }),
-          const SizedBox(width: 14), // streak space
+          const SizedBox(width: 14),
         ],
       ),
     );
   }
 
-  // ── TODAY TAB ──
+  // ── TODAY TAB ───────────────────────────────────────────────────────────
   Widget _buildTodayTab(HabitProvider habits, GameProvider game) {
     final today = DateTime.now().weekday;
     final scheduled =
-        habits.habits.where((h) => h.isScheduledFor(today)).toList();
+    habits.habits.where((h) => h.isScheduledFor(today)).toList();
 
     if (scheduled.isEmpty) {
       return _emptyState(
@@ -314,7 +375,6 @@ class _HabitsScreenState extends State<HabitsScreen>
       );
     }
 
-    // Sort: incomplete first, then completed
     scheduled.sort((a, b) {
       final aDone = habits.isCompletedToday(a.id);
       final bDone = habits.isCompletedToday(b.id);
@@ -325,12 +385,14 @@ class _HabitsScreenState extends State<HabitsScreen>
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
       itemCount: scheduled.length,
-      itemBuilder: (ctx, i) => _habitRow(habits, game, scheduled[i]),
+      itemBuilder: (ctx, i) =>
+          _habitRow(habits, game, scheduled[i]),
     );
   }
 
-  // ── Habit Row with weekly dots ──
-  Widget _habitRow(HabitProvider habits, GameProvider game, Habit habit) {
+  // ── Habit Row with weekly dots ──────────────────────────────────────────
+  Widget _habitRow(
+      HabitProvider habits, GameProvider game, Habit habit) {
     final color = _hex(habit.color);
     final todayDone = habits.isCompletedToday(habit.id);
     final weekData = habits.getWeekCompletions(habit.id, _weekStart);
@@ -342,15 +404,20 @@ class _HabitsScreenState extends State<HabitsScreen>
               builder: (_) => HabitDetailScreen(habitId: habit.id))),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: todayDone ? color.withValues(alpha: 0.06) : _HC.card,
+          color: todayDone
+              ? color.withValues(
+              alpha: _HC.isDark(context) ? 0.06 : 0.07)
+              : _HC.card(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: todayDone
-                ? color.withValues(alpha: 0.2)
-                : Colors.white.withValues(alpha: 0.03),
+                ? color.withValues(alpha: 0.25)
+                : _HC.border(context),
           ),
+          boxShadow: _HC.shadow(context),
         ),
         child: Row(
           children: [
@@ -371,16 +438,18 @@ class _HabitsScreenState extends State<HabitsScreen>
                   color: todayDone ? color : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: todayDone ? color : color.withValues(alpha: 0.3),
+                    color: todayDone
+                        ? color
+                        : color.withValues(alpha: 0.4),
                     width: 2,
                   ),
                 ),
                 child: todayDone
                     ? const Icon(Icons.check_rounded,
-                        color: Colors.white, size: 18)
+                    color: Colors.white, size: 18)
                     : Text(habit.emoji,
-                        style: const TextStyle(fontSize: 14),
-                        textAlign: TextAlign.center),
+                    style: const TextStyle(fontSize: 14),
+                    textAlign: TextAlign.center),
               ),
             ),
             const SizedBox(width: 10),
@@ -398,35 +467,36 @@ class _HabitsScreenState extends State<HabitsScreen>
                       color: done
                           ? color.withValues(alpha: 0.9)
                           : (isToday
-                              ? color.withValues(alpha: 0.1)
-                              : Colors.white.withValues(alpha: 0.04)),
+                          ? color.withValues(alpha: 0.1)
+                          : _HC.surface(context)),
                       border: isToday && !done
                           ? Border.all(
-                              color: color.withValues(alpha: 0.4), width: 1.5)
+                          color: color.withValues(alpha: 0.4),
+                          width: 1.5)
                           : null,
                       boxShadow: done
                           ? [
-                              BoxShadow(
-                                  color: color.withValues(alpha: 0.3),
-                                  blurRadius: 6)
-                            ]
+                        BoxShadow(
+                            color: color.withValues(alpha: 0.3),
+                            blurRadius: 6)
+                      ]
                           : null,
                     ),
                     child: done
                         ? const Icon(Icons.check_rounded,
-                            size: 10, color: Colors.white)
+                        size: 10, color: Colors.white)
                         : null,
                   ),
                 ),
               );
             }),
             const SizedBox(width: 6),
-            // Streak
             if (habit.currentStreak > 0)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: _HC.gold.withValues(alpha: 0.1),
+                  color: _HC.gold.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text('${habit.currentStreak}🔥',
@@ -443,7 +513,7 @@ class _HabitsScreenState extends State<HabitsScreen>
     );
   }
 
-  // ── ALL TAB ──
+  // ── ALL TAB ─────────────────────────────────────────────────────────────
   Widget _buildAllTab(HabitProvider habits) {
     if (habits.habits.isEmpty) {
       return _emptyState(
@@ -453,7 +523,6 @@ class _HabitsScreenState extends State<HabitsScreen>
       );
     }
 
-    // Group by category
     final byCategory = <HabitCategory, List<Habit>>{};
     for (final h in habits.habits) {
       byCategory.putIfAbsent(h.category, () => []).add(h);
@@ -469,19 +538,20 @@ class _HabitsScreenState extends State<HabitsScreen>
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
                 children: [
-                  Text(entry.key.emoji, style: const TextStyle(fontSize: 16)),
+                  Text(entry.key.emoji,
+                      style: const TextStyle(fontSize: 16)),
                   const SizedBox(width: 8),
                   Text(entry.key.label,
                       style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
-                          color: Colors.white)),
+                          color: _HC.textPrimary(context))),
                   const SizedBox(width: 8),
                   Text('${entry.value.length}',
                       style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: _HC.textSec)),
+                          color: _HC.textSec(context))),
                 ],
               ),
             ),
@@ -496,7 +566,8 @@ class _HabitsScreenState extends State<HabitsScreen>
     final color = _hex(habit.color);
     final recent = habits.getRecentDays(habit.id, 30);
     final completedDays = recent.where((e) => e.value).length;
-    final rate = recent.isEmpty ? 0.0 : completedDays / recent.length;
+    final rate =
+    recent.isEmpty ? 0.0 : completedDays / recent.length;
 
     return GestureDetector(
       onTap: () => Navigator.push(
@@ -508,9 +579,10 @@ class _HabitsScreenState extends State<HabitsScreen>
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: _HC.card,
+          color: _HC.card(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.03)),
+          border: Border.all(color: _HC.border(context)),
+          boxShadow: _HC.shadow(context),
         ),
         child: Row(
           children: [
@@ -522,8 +594,8 @@ class _HabitsScreenState extends State<HabitsScreen>
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
-                  child:
-                      Text(habit.emoji, style: const TextStyle(fontSize: 20))),
+                  child: Text(habit.emoji,
+                      style: const TextStyle(fontSize: 20))),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -534,7 +606,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                       style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white)),
+                          color: _HC.textPrimary(context))),
                   const SizedBox(height: 2),
                   Row(
                     children: [
@@ -542,9 +614,10 @@ class _HabitsScreenState extends State<HabitsScreen>
                           style: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: _HC.textSec)),
+                              color: _HC.textSec(context))),
                       Text('  ·  ',
-                          style: GoogleFonts.inter(color: _HC.textSec)),
+                          style: GoogleFonts.inter(
+                              color: _HC.textSec(context))),
                       Text('${(rate * 100).round()}% rate',
                           style: GoogleFonts.inter(
                               fontSize: 11,
@@ -559,7 +632,8 @@ class _HabitsScreenState extends State<HabitsScreen>
             Row(
               mainAxisSize: MainAxisSize.min,
               children: recent
-                  .skip(recent.length > 14 ? recent.length - 14 : 0)
+                  .skip(
+                  recent.length > 14 ? recent.length - 14 : 0)
                   .map((e) {
                 return Container(
                   width: 4,
@@ -568,7 +642,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                   decoration: BoxDecoration(
                     color: e.value
                         ? color.withValues(alpha: 0.8)
-                        : Colors.white.withValues(alpha: 0.04),
+                        : _HC.surface(context),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 );
@@ -587,11 +661,11 @@ class _HabitsScreenState extends State<HabitsScreen>
     );
   }
 
-  // ── Empty state ──
+  // ── Empty state ─────────────────────────────────────────────────────────
   Widget _emptyState(
       {required String emoji,
-      required String title,
-      required String subtitle}) {
+        required String title,
+        required String subtitle}) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -602,19 +676,19 @@ class _HabitsScreenState extends State<HabitsScreen>
               style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white)),
+                  color: _HC.textPrimary(context))),
           const SizedBox(height: 6),
           Text(subtitle,
               style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: _HC.textSec)),
+                  color: _HC.textSec(context))),
         ],
       ),
     );
   }
 
-  // ── Bottom Sheets ──
+  // ── Bottom Sheets ───────────────────────────────────────────────────────
   void _showAddSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -624,10 +698,11 @@ class _HabitsScreenState extends State<HabitsScreen>
     );
   }
 
-  void _showTemplatePacks(BuildContext context, HabitProvider habits) {
+  void _showTemplatePacks(
+      BuildContext context, HabitProvider habits) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF14141C),
+      backgroundColor: _HC.card(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -638,107 +713,119 @@ class _HabitsScreenState extends State<HabitsScreen>
             maxChildSize: 0.85,
             expand: false,
             builder: (_, scrollController) => Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: _HC.textSec(context)
+                            .withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                      const SizedBox(height: 20),
-                      Text('✨ Template Packs',
-                          style: GoogleFonts.inter(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white)),
-                      const SizedBox(height: 4),
-                      Text('Quick-start with curated habits',
-                          style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: _HC.textSec)),
-                      const SizedBox(height: 16),
-                      Expanded(
-                          child: ListView(
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text('✨ Template Packs',
+                      style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: _HC.textPrimary(context))),
+                  const SizedBox(height: 4),
+                  Text('Quick-start with curated habits',
+                      style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: _HC.textSec(context))),
+                  const SizedBox(height: 16),
+                  Expanded(
+                      child: ListView(
                         controller: scrollController,
                         children: HabitTemplatePack.all
                             .map((pack) => GestureDetector(
-                                  onTap: () {
-                                    habits.createFromPack(pack);
-                                    Navigator.pop(ctx);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                            'Added ${pack.templates.length} habits from "${pack.name}"',
-                                            style: GoogleFonts.inter(
-                                                fontWeight: FontWeight.w600)),
-                                        backgroundColor: _HC.mint,
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12)),
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    margin: const EdgeInsets.only(bottom: 10),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 14, vertical: 14),
-                                    decoration: BoxDecoration(
-                                      color: _HC.card,
-                                      borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.04)),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Text(pack.emoji,
-                                            style:
-                                                const TextStyle(fontSize: 24)),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(pack.name,
-                                                  style: GoogleFonts.inter(
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                      color: Colors.white)),
-                                              Text(
-                                                  '${pack.subtitle} · ${pack.templates.length} habits',
-                                                  style: GoogleFonts.inter(
-                                                      fontSize: 11,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      color: _HC.textSec)),
-                                            ],
-                                          ),
-                                        ),
-                                        Icon(Icons.add_circle_outline_rounded,
-                                            color: _HC.purple
-                                                .withValues(alpha: 0.6),
-                                            size: 22),
-                                      ],
-                                    ),
+                          onTap: () {
+                            habits.createFromPack(pack);
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Added ${pack.templates.length} habits from "${pack.name}"',
+                                    style: GoogleFonts.inter(
+                                        fontWeight:
+                                        FontWeight.w600,
+                                        color: Colors.white)),
+                                backgroundColor: _HC.mint,
+                                behavior:
+                                SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                    BorderRadius.circular(
+                                        12)),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(
+                                bottom: 10),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: _HC.cardAlt(context),
+                              borderRadius:
+                              BorderRadius.circular(14),
+                              border: Border.all(
+                                  color: _HC.border(context)),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(pack.emoji,
+                                    style: const TextStyle(
+                                        fontSize: 24)),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    children: [
+                                      Text(pack.name,
+                                          style: GoogleFonts.inter(
+                                              fontSize: 14,
+                                              fontWeight:
+                                              FontWeight.w700,
+                                              color: _HC
+                                                  .textPrimary(
+                                                  context))),
+                                      Text(
+                                          '${pack.subtitle} · ${pack.templates.length} habits',
+                                          style: GoogleFonts.inter(
+                                              fontSize: 11,
+                                              fontWeight:
+                                              FontWeight.w500,
+                                              color: _HC.textSec(
+                                                  context))),
+                                    ],
                                   ),
-                                ))
+                                ),
+                                Icon(
+                                    Icons
+                                        .add_circle_outline_rounded,
+                                    color: _HC.purple
+                                        .withValues(alpha: 0.6),
+                                    size: 22),
+                              ],
+                            ),
+                          ),
+                        ))
                             .toList(),
                       )),
-                    ],
-                  ),
-                ));
+                ],
+              ),
+            ));
       },
     );
   }
@@ -746,7 +833,7 @@ class _HabitsScreenState extends State<HabitsScreen>
   void _showHabitActions(Habit habit, HabitProvider habits) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF14141C),
+      backgroundColor: _HC.card(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -760,16 +847,18 @@ class _HabitsScreenState extends State<HabitsScreen>
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: _HC.textSec(context).withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               const SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.edit_rounded, color: _HC.purple),
+                leading:
+                const Icon(Icons.edit_rounded, color: _HC.purple),
                 title: Text('Edit',
                     style: GoogleFonts.inter(
-                        color: Colors.white, fontWeight: FontWeight.w600)),
+                        color: _HC.textPrimary(context),
+                        fontWeight: FontWeight.w600)),
                 onTap: () {
                   Navigator.pop(ctx);
                   showModalBottomSheet(
@@ -781,20 +870,24 @@ class _HabitsScreenState extends State<HabitsScreen>
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.archive_rounded, color: _HC.gold),
+                leading:
+                const Icon(Icons.archive_rounded, color: _HC.gold),
                 title: Text('Archive',
                     style: GoogleFonts.inter(
-                        color: Colors.white, fontWeight: FontWeight.w600)),
+                        color: _HC.textPrimary(context),
+                        fontWeight: FontWeight.w600)),
                 onTap: () {
                   Navigator.pop(ctx);
                   habits.archiveHabit(habit.id);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete_rounded, color: _HC.red),
+                leading:
+                const Icon(Icons.delete_rounded, color: _HC.red),
                 title: Text('Delete',
                     style: GoogleFonts.inter(
-                        color: _HC.red, fontWeight: FontWeight.w600)),
+                        color: _HC.red,
+                        fontWeight: FontWeight.w600)),
                 onTap: () {
                   Navigator.pop(ctx);
                   habits.deleteHabit(habit.id);

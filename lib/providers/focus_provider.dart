@@ -95,11 +95,16 @@ extension FocusLevelX on FocusLevel {
   }
 }
 
-class FocusProvider with ChangeNotifier {
+class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
   static const platform = MethodChannel('com.monojog.app/focus');
+  static const MethodChannel _blockChannel =
+  MethodChannel("com.monojog.app/blocker");
 
   final DatabaseService _db = DatabaseService.instance;
   final Uuid _uuid = const Uuid();
+
+  bool _hasAccessibilityPermission = false;
+  bool get hasAccessibilityPermission => _hasAccessibilityPermission;
 
   FocusSession? _currentFocusSession;
   List<BlockedApp> _blockedApps = [];
@@ -198,6 +203,21 @@ class FocusProvider with ChangeNotifier {
     return elapsed ~/ 60;
   }
 
+
+  Future<void> _saveBlockedAppsToNative() async {
+    try {
+      final blockedPackages =
+      _blockedApps.map((app) => app.packageName).toList();
+
+      await _blockChannel.invokeMethod(
+        "saveBlockedApps",
+        blockedPackages,
+      );
+    } catch (e) {
+      debugPrint("Failed to save blocked apps: $e");
+    }
+  }
+
   // -- Setters --
   void setFocusLevel(FocusLevel level) {
     _focusLevel = level;
@@ -252,6 +272,7 @@ class FocusProvider with ChangeNotifier {
   void setBreakMinutes(int v) => setShortBreakMinutes(v);
 
   FocusProvider() {
+    WidgetsBinding.instance.addObserver(this);
     _initialize();
   }
 
@@ -268,6 +289,8 @@ class FocusProvider with ChangeNotifier {
       final result = await platform.invokeMethod('checkPermissions');
       _hasUsagePermission = result['hasUsagePermission'] ?? false;
       _hasOverlayPermission = result['hasOverlayPermission'] ?? false;
+      _hasAccessibilityPermission =
+          result['hasAccessibilityPermission'] ?? false;
       notifyListeners();
     } on PlatformException catch (e) {
       debugPrint('Failed to check permissions: ${e.message}');
@@ -298,10 +321,15 @@ class FocusProvider with ChangeNotifier {
     try {
       final result = await platform.invokeMethod('getInstalledApps');
       final List<dynamic> apps = result ?? [];
+
       _installedApps = apps
-          .map((app) => InstalledApp.fromMap(Map<String, dynamic>.from(app)))
-          .toList();
-      _installedApps.sort((a, b) => a.appName.compareTo(b.appName));
+          .map((app) =>
+          InstalledApp.fromMap(Map<String, dynamic>.from(app)))
+          .toList()
+        ..sort((a, b) =>
+            a.appName.toLowerCase()
+                .compareTo(b.appName.toLowerCase()));
+
       notifyListeners();
     } on PlatformException catch (e) {
       debugPrint('Failed to load installed apps: ${e.message}');
@@ -316,6 +344,7 @@ class FocusProvider with ChangeNotifier {
 
   Future<void> addBlockedApp(InstalledApp app) async {
     final existing = _blockedApps.any((b) => b.packageName == app.packageName);
+
     if (existing) {
       await _db.updateBlockedApp(app.packageName, true);
     } else {
@@ -327,12 +356,17 @@ class FocusProvider with ChangeNotifier {
       );
       await _db.insertBlockedApp(blockedApp.toMap());
     }
+
     await _loadBlockedApps();
+
+    await _saveBlockedAppsToNative();   // 👈 এটা যোগ করো
   }
 
   Future<void> removeBlockedApp(String packageName) async {
     await _db.deleteBlockedApp(packageName);
     await _loadBlockedApps();
+
+    await _saveBlockedAppsToNative();   // 👈 এটা যোগ করো
   }
 
   Future<void> toggleBlockedApp(String packageName, bool isBlocked) async {
@@ -341,7 +375,10 @@ class FocusProvider with ChangeNotifier {
     } else {
       await _db.updateBlockedApp(packageName, isBlocked);
     }
+
     await _loadBlockedApps();
+
+    await _saveBlockedAppsToNative();   // 👈 এটা যোগ করো
   }
 
   List<String> _resolveBlockedApps() {
@@ -378,6 +415,18 @@ class FocusProvider with ChangeNotifier {
   }
 
   Future<bool> startFocusSession() async {
+    if (!_hasAccessibilityPermission) {
+      await platform.invokeMethod('openAccessibilitySettings');
+
+      // Wait for user to come back
+      await Future.delayed(const Duration(seconds: 1));
+      await checkPermissions();
+
+      if (!_hasAccessibilityPermission) {
+        return false;
+      }
+    }
+
     if (_isFocusActive || _isOnBreak) {
       debugPrint('[FocusProvider] Session already active.');
       return false;
@@ -729,7 +778,15 @@ class FocusProvider with ChangeNotifier {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _focusTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      checkPermissions();
+    }
   }
 }

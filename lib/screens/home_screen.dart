@@ -13,7 +13,7 @@ import 'subjects_screen.dart';
 import 'session_history_screen.dart';
 import 'task_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final void Function(int)? onSwitchTab;
   const HomeScreen({super.key, this.onSwitchTab});
 
@@ -34,6 +34,11 @@ class HomeScreen extends StatelessWidget {
   static const _isFocusActive    = false;
   static const _focusRemaining   = '25:00';
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -133,7 +138,7 @@ class HomeScreen extends StatelessWidget {
                       const Text('🔥', style: TextStyle(fontSize: 14)),
                       const SizedBox(width: 4),
                       Text(
-                        '$_currentStreak',
+                        '${HomeScreen._currentStreak}',
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
@@ -179,11 +184,11 @@ class HomeScreen extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: _LevelCard(
-              level: _level,
-              levelTitle: _levelTitle,
-              experience: _experience,
-              experienceToNext: _experienceToNext,
-              health: _health,
+              level: HomeScreen._level,
+              levelTitle: HomeScreen._levelTitle,
+              experience: HomeScreen._experience,
+              experienceToNext: HomeScreen._experienceToNext,
+              health: HomeScreen._health,
               isDark: isDark,
               cardBg: cardBg,
               cardBorder: cardBorder,
@@ -203,7 +208,7 @@ class HomeScreen extends StatelessWidget {
               children: [
                 _StatChip(
                   icon: Icons.timer_rounded,
-                  value: '$_totalFocusMin',
+                  value: '${HomeScreen._totalFocusMin}',
                   unit: 'min',
                   color: AppTheme.primaryColor,
                   textPrimary: textPrimary,
@@ -212,7 +217,7 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(width: 10),
                 _StatChip(
                   icon: Icons.check_circle_rounded,
-                  value: '$_sessionsDone',
+                  value: '${HomeScreen._sessionsDone}',
                   unit: 'done',
                   color: AppTheme.successColor,
                   textPrimary: textPrimary,
@@ -221,7 +226,7 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(width: 10),
                 _StatChip(
                   icon: Icons.monetization_on_rounded,
-                  value: '$_gold',
+                  value: '${HomeScreen._gold}',
                   unit: 'gold',
                   color: AppTheme.goldColor,
                   textPrimary: textPrimary,
@@ -230,7 +235,7 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(width: 10),
                 _StatChip(
                   icon: Icons.diamond_rounded,
-                  value: '$_gems',
+                  value: '${HomeScreen._gems}',
                   unit: 'gems',
                   color: const Color(0xFFE040FB),
                   textPrimary: textPrimary,
@@ -244,7 +249,7 @@ class HomeScreen extends StatelessWidget {
         const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
         // ── Today's Habits ────────────────────────────────────────────────
-        if (_habitsScheduled > 0)
+        if (HomeScreen._habitsScheduled > 0)
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -286,14 +291,14 @@ class HomeScreen extends StatelessWidget {
                           fit: StackFit.expand,
                           children: [
                             CircularProgressIndicator(
-                              value: _habitsScheduled > 0
-                                  ? _habitsDone / _habitsScheduled
+                              value: HomeScreen._habitsScheduled > 0
+                                  ? HomeScreen._habitsDone / HomeScreen._habitsScheduled
                                   : 0,
                               backgroundColor: isDark
                                   ? Colors.white.withValues(alpha: 0.06)
                                   : Colors.grey.shade200,
                               valueColor: AlwaysStoppedAnimation(
-                                _habitsDone >= _habitsScheduled
+                                HomeScreen._habitsDone >= HomeScreen._habitsScheduled
                                     ? AppTheme.goldColor
                                     : const Color(0xFF00E5A0),
                               ),
@@ -302,10 +307,10 @@ class HomeScreen extends StatelessWidget {
                             ),
                             Center(
                               child: Text(
-                                _habitsScheduled > 0 &&
-                                    _habitsDone >= _habitsScheduled
+                                HomeScreen._habitsScheduled > 0 &&
+                                    HomeScreen._habitsDone >= HomeScreen._habitsScheduled
                                     ? '🎉'
-                                    : '${_habitsScheduled > 0 ? ((_habitsDone / _habitsScheduled) * 100).round() : 0}%',
+                                    : '${HomeScreen._habitsScheduled > 0 ? ((HomeScreen._habitsDone / HomeScreen._habitsScheduled) * 100).round() : 0}%',
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w800,
@@ -331,7 +336,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '$_habitsDone of $_habitsScheduled done',
+                              '${HomeScreen._habitsDone} of ${HomeScreen._habitsScheduled} done',
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -378,9 +383,9 @@ class HomeScreen extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: _StartFocusCTA(
-              isFocusActive: _isFocusActive,
-              focusRemaining: _focusRemaining,
-              onSwitchTab: onSwitchTab,
+              isFocusActive: HomeScreen._isFocusActive,
+              focusRemaining: HomeScreen._focusRemaining,
+              onSwitchTab: widget.onSwitchTab,
               isDark: isDark,
               textPrimary: textPrimary,
               textSecondary: textSecondary,
@@ -395,10 +400,10 @@ class HomeScreen extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: _MyDayQuickCard(
-              todayTasks: _todayTasks,
-              todayDone: _todayDone,
-              habitsScheduled: _habitsScheduled,
-              habitsDone: _habitsDone,
+              todayTasks: HomeScreen._todayTasks,
+              todayDone: HomeScreen._todayDone,
+              habitsScheduled: HomeScreen._habitsScheduled,
+              habitsDone: HomeScreen._habitsDone,
               isDark: isDark,
               textPrimary: textPrimary,
               textSecondary: textSecondary,

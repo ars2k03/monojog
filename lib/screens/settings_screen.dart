@@ -833,6 +833,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               },
               icon: Icon(
+                color: isDark ? Colors.white : Colors.black,
                 auth.isOfflineMode
                     ? Icons.person_add_rounded
                     : Icons.delete_forever_rounded,
@@ -846,16 +847,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     : (locale.isBengali
                     ? 'অ্যাকাউন্ট মুছুন'
                     : 'Delete Account'),
-                style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  color: isDark? Colors.white : Colors.black,
+                    fontSize: 15, fontWeight: FontWeight.w700
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: auth.isOfflineMode
-                    ? AppTheme.primaryColor.withValues(alpha: 0.12)
-                    : Colors.redAccent.withValues(alpha: 0.12),
+                    ? AppTheme.primaryColor.withValues(alpha: 0.7)
+                    : Colors.red.withValues(alpha: 0.7),
                 foregroundColor: auth.isOfflineMode
                     ? AppTheme.primaryColor
-                    : Colors.redAccent,
+                    : Colors.red,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                   side: BorderSide(

@@ -260,7 +260,9 @@ class _BlockedAppsScreenState extends State<BlockedAppsScreen> {
                     final bBlocked = _isAppBlocked(focus, b.packageName);
                     if (aBlocked && !bBlocked) return -1;
                     if (!aBlocked && bBlocked) return 1;
-                    return a.appName.compareTo(b.appName);
+                    return a.appName
+                        .toLowerCase()
+                        .compareTo(b.appName.toLowerCase());
                   });
 
                   return ListView.builder(
