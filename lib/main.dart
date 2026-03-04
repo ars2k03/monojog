@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:monojog/firebase_options.dart';
-import 'package:monojog/theme/app_theme.dart';
 import 'package:monojog/theme/theme_provider.dart';
 import 'package:monojog/providers/auth_provider.dart';
 import 'package:monojog/providers/study_provider.dart';
@@ -19,17 +18,9 @@ import 'package:monojog/start_page/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase BEFORE runApp
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.black,
-    statusBarIconBrightness: Brightness.dark,
-    systemNavigationBarColor: Colors.black,
-    systemNavigationBarIconBrightness: Brightness.dark,
-  ));
 
   runApp(
     MultiProvider(
@@ -60,6 +51,7 @@ class MonojogApp extends StatelessWidget {
     return MaterialApp(
       title: 'Monojog',
       debugShowCheckedModeBanner: false,
+
       theme: ThemeData(
         brightness: Brightness.light,
         colorScheme: ColorScheme.fromSeed(
@@ -70,8 +62,14 @@ class MonojogApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
+            statusBarBrightness: Brightness.light,
+          ),
         ),
       ),
+
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         colorScheme: ColorScheme.fromSeed(
@@ -82,10 +80,35 @@ class MonojogApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           foregroundColor: Colors.white,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness: Brightness.dark,
+          ),
         ),
       ),
 
       themeMode: themeProvider.themeMode,
+
+      // 🔥 Magic part
+      builder: (context, child) {
+        final isDark =
+            Theme.of(context).brightness == Brightness.dark;
+
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+            isDark ? Brightness.light : Brightness.dark,
+            systemNavigationBarColor:
+            isDark ? Colors.black : Colors.white,
+            systemNavigationBarIconBrightness:
+            isDark ? Brightness.light : Brightness.dark,
+          ),
+          child: child!,
+        );
+      },
+
       home: const SplashScreen(),
     );
   }
