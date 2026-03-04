@@ -6,10 +6,49 @@ import 'package:monojog/providers/habit_provider.dart';
 import 'package:monojog/providers/game_provider.dart';
 import 'package:monojog/widgets/add_habit_sheet.dart';
 
+// ── Adaptive palette (light + dark) ─────────────────────────────────────────
 class _D {
-  static const bg = Color(0xFF0A0A0F);
-  static const card = Color(0xFF14141C);
-  static const textSec = Color(0xFF8B8FA3);
+  static Color bg(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? const Color(0xFF0A0A0F)
+          : const Color(0xFFF0F4F8);
+
+  static Color card(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? const Color(0xFF14141C)
+          : const Color(0xFFFFFFFF);
+
+  static Color textPrimary(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? Colors.white
+          : const Color(0xFF0D1117);
+
+  static Color textSec(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? const Color(0xFF8B8FA3)
+          : const Color(0xFF5A6070);
+
+  static Color border(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? Colors.white.withValues(alpha: 0.04)
+          : Colors.black.withValues(alpha: 0.07);
+
+  static Color surface(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? Colors.white.withValues(alpha: 0.04)
+          : Colors.black.withValues(alpha: 0.05);
+
+  static bool isDark(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark;
+
+  static List<BoxShadow> shadow(BuildContext ctx) => isDark(ctx)
+      ? []
+      : [
+    BoxShadow(
+        color: Colors.black.withValues(alpha: 0.06),
+        blurRadius: 10,
+        offset: const Offset(0, 3))
+  ];
 }
 
 Color _hex(String hex) {
@@ -48,11 +87,15 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
 
         if (habit == null) {
           return Scaffold(
-            backgroundColor: _D.bg,
-            appBar: AppBar(backgroundColor: Colors.transparent),
+            backgroundColor: _D.bg(context),
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              iconTheme: IconThemeData(color: _D.textPrimary(context)),
+            ),
             body: Center(
                 child: Text('Habit not found',
-                    style: GoogleFonts.inter(color: Colors.white))),
+                    style: GoogleFonts.inter(
+                        color: _D.textPrimary(context)))),
           );
         }
 
@@ -63,7 +106,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
         final todayDone = habits.isCompletedToday(habit.id);
 
         return Scaffold(
-          backgroundColor: _D.bg,
+          backgroundColor: _D.bg(context),
           body: SafeArea(
             child: CustomScrollView(
               slivers: [
@@ -82,11 +125,15 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  color: _D.card,
+                                  color: _D.card(context),
                                   borderRadius: BorderRadius.circular(12),
+                                  border:
+                                  Border.all(color: _D.border(context)),
+                                  boxShadow: _D.shadow(context),
                                 ),
-                                child: const Icon(Icons.arrow_back_rounded,
-                                    color: Colors.white, size: 20),
+                                child: Icon(Icons.arrow_back_rounded,
+                                    color: _D.textPrimary(context),
+                                    size: 20),
                               ),
                             ),
                             const Spacer(),
@@ -95,7 +142,8 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                                 context: context,
                                 isScrollControlled: true,
                                 backgroundColor: Colors.transparent,
-                                builder: (_) => AddHabitSheet(editHabit: habit),
+                                builder: (_) =>
+                                    AddHabitSheet(editHabit: habit),
                               ),
                               child: Container(
                                 width: 40,
@@ -103,6 +151,10 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                                 decoration: BoxDecoration(
                                   color: color.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                      color:
+                                      color.withValues(alpha: 0.2)),
+                                  boxShadow: _D.shadow(context),
                                 ),
                                 child: Icon(Icons.edit_rounded,
                                     color: color, size: 18),
@@ -125,33 +177,39 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                               ),
                               child: Center(
                                   child: Text(habit.emoji,
-                                      style: const TextStyle(fontSize: 28))),
+                                      style:
+                                      const TextStyle(fontSize: 28))),
                             ),
                             const SizedBox(width: 14),
                             Expanded(
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                crossAxisAlignment:
+                                CrossAxisAlignment.start,
                                 children: [
                                   Text(habit.title,
                                       style: GoogleFonts.inter(
                                           fontSize: 20,
                                           fontWeight: FontWeight.w900,
-                                          color: Colors.white)),
+                                          color:
+                                          _D.textPrimary(context))),
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
                                       Container(
-                                        padding: const EdgeInsets.symmetric(
+                                        padding: const EdgeInsets
+                                            .symmetric(
                                             horizontal: 8, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: color.withValues(alpha: 0.1),
+                                          color: color
+                                              .withValues(alpha: 0.1),
                                           borderRadius:
-                                              BorderRadius.circular(6),
+                                          BorderRadius.circular(6),
                                         ),
                                         child: Text(habit.category.label,
                                             style: GoogleFonts.inter(
                                                 fontSize: 10,
-                                                fontWeight: FontWeight.w700,
+                                                fontWeight:
+                                                FontWeight.w700,
                                                 color: color)),
                                       ),
                                       const SizedBox(width: 8),
@@ -159,7 +217,8 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                                           style: GoogleFonts.inter(
                                               fontSize: 11,
                                               fontWeight: FontWeight.w500,
-                                              color: _D.textSec)),
+                                              color:
+                                              _D.textSec(context))),
                                     ],
                                   ),
                                 ],
@@ -186,25 +245,26 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                               gradient: todayDone
                                   ? null
                                   : LinearGradient(colors: [
-                                      color,
-                                      color.withValues(alpha: 0.7)
-                                    ]),
+                                color,
+                                color.withValues(alpha: 0.7)
+                              ]),
                               color: todayDone
                                   ? color.withValues(alpha: 0.08)
                                   : null,
                               borderRadius: BorderRadius.circular(16),
                               border: todayDone
                                   ? Border.all(
-                                      color: color.withValues(alpha: 0.3))
+                                  color: color.withValues(alpha: 0.3))
                                   : null,
                               boxShadow: todayDone
                                   ? null
                                   : [
-                                      BoxShadow(
-                                          color: color.withValues(alpha: 0.3),
-                                          blurRadius: 14,
-                                          offset: const Offset(0, 6))
-                                    ],
+                                BoxShadow(
+                                    color:
+                                    color.withValues(alpha: 0.3),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 6))
+                              ],
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -213,7 +273,8 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                                   todayDone
                                       ? Icons.check_circle_rounded
                                       : Icons.radio_button_unchecked_rounded,
-                                  color: todayDone ? color : Colors.white,
+                                  color:
+                                  todayDone ? color : Colors.white,
                                   size: 22,
                                 ),
                                 const SizedBox(width: 10),
@@ -224,7 +285,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                                     style: GoogleFonts.inter(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w800,
-                                      color: todayDone ? color : Colors.white,
+                                      color: todayDone
+                                          ? color
+                                          : Colors.white,
                                     )),
                               ],
                             ),
@@ -241,16 +304,19 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                     child: Row(
                       children: [
-                        _statCard('Current\nStreak', '${habit.currentStreak}',
-                            '🔥', color),
+                        _statCard(context, 'Current\nStreak',
+                            '${habit.currentStreak}', '🔥', color),
                         const SizedBox(width: 10),
-                        _statCard('Best\nStreak', '${habit.bestStreak}', '🏆',
+                        _statCard(context, 'Best\nStreak',
+                            '${habit.bestStreak}', '🏆',
                             const Color(0xFFFFD700)),
                         const SizedBox(width: 10),
-                        _statCard('30-day\nRate', '${(rate * 100).round()}%',
-                            '📊', const Color(0xFF00E5A0)),
+                        _statCard(context, '30-day\nRate',
+                            '${(rate * 100).round()}%', '📊',
+                            const Color(0xFF00E5A0)),
                         const SizedBox(width: 10),
-                        _statCard('Total\nDays', '$completedDays', '📅',
+                        _statCard(context, 'Total\nDays',
+                            '$completedDays', '📅',
                             const Color(0xFF00B4D8)),
                       ],
                     ),
@@ -265,7 +331,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                   ),
                 ),
 
-                // ── Heat Map (last 90 days) ──
+                // ── Heat Map ──
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -282,29 +348,36 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     );
   }
 
-  Widget _statCard(String label, String value, String emoji, Color color) {
+  Widget _statCard(BuildContext context, String label, String value,
+      String emoji, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: _D.card,
+          color: _D.card(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.03)),
+          border: Border.all(color: _D.border(context)),
+          boxShadow: _D.shadow(context),
         ),
         child: Column(
           children: [
             Text(emoji, style: const TextStyle(fontSize: 18)),
             const SizedBox(height: 6),
-            Text(value,
-                style: GoogleFonts.inter(
-                    fontSize: 18, fontWeight: FontWeight.w900, color: color)),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(value,
+                  style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: color)),
+            ),
             const SizedBox(height: 4),
             Text(label,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                     fontSize: 9,
                     fontWeight: FontWeight.w600,
-                    color: _D.textSec,
+                    color: _D.textSec(context),
                     height: 1.3)),
           ],
         ),
@@ -312,23 +385,25 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     );
   }
 
-  // ── Calendar View ──
+  // ── Calendar View ──────────────────────────────────────────────────────────
   Widget _buildCalendar(HabitProvider habits, Habit habit, Color color) {
-    final completions =
-        habits.getMonthCompletions(habit.id, _viewMonth.year, _viewMonth.month);
+    final completions = habits.getMonthCompletions(
+        habit.id, _viewMonth.year, _viewMonth.month);
     final completionDays = completions.map((d) => d.day).toSet();
 
     final firstDay = DateTime(_viewMonth.year, _viewMonth.month, 1);
-    final daysInMonth = DateTime(_viewMonth.year, _viewMonth.month + 1, 0).day;
+    final daysInMonth =
+        DateTime(_viewMonth.year, _viewMonth.month + 1, 0).day;
     final startWeekday = firstDay.weekday; // 1=Mon
     final today = DateTime.now();
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _D.card,
+        color: _D.card(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.03)),
+        border: Border.all(color: _D.border(context)),
+        boxShadow: _D.shadow(context),
       ),
       child: Column(
         children: [
@@ -338,17 +413,18 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
             children: [
               GestureDetector(
                 onTap: () => setState(() {
-                  _viewMonth = DateTime(_viewMonth.year, _viewMonth.month - 1);
+                  _viewMonth =
+                      DateTime(_viewMonth.year, _viewMonth.month - 1);
                 }),
                 child: Container(
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.04),
+                    color: _D.surface(context),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.chevron_left_rounded,
-                      color: Colors.white, size: 20),
+                  child: Icon(Icons.chevron_left_rounded,
+                      color: _D.textPrimary(context), size: 20),
                 ),
               ),
               Text(
@@ -356,21 +432,22 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                 style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: Colors.white),
+                    color: _D.textPrimary(context)),
               ),
               GestureDetector(
                 onTap: () => setState(() {
-                  _viewMonth = DateTime(_viewMonth.year, _viewMonth.month + 1);
+                  _viewMonth =
+                      DateTime(_viewMonth.year, _viewMonth.month + 1);
                 }),
                 child: Container(
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.04),
+                    color: _D.surface(context),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.chevron_right_rounded,
-                      color: Colors.white, size: 20),
+                  child: Icon(Icons.chevron_right_rounded,
+                      color: _D.textPrimary(context), size: 20),
                 ),
               ),
             ],
@@ -380,13 +457,13 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
           Row(
             children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
                 .map((d) => Expanded(
-                      child: Text(d,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: _D.textSec)),
-                    ))
+              child: Text(d,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: _D.textSec(context))),
+            ))
                 .toList(),
           ),
           const SizedBox(height: 8),
@@ -405,18 +482,20 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                     today.month == _viewMonth.month &&
                     today.day == dayNum;
                 final isFuture =
-                    DateTime(_viewMonth.year, _viewMonth.month, dayNum)
-                        .isAfter(today);
+                DateTime(_viewMonth.year, _viewMonth.month, dayNum)
+                    .isAfter(today);
 
                 return Expanded(
                   child: GestureDetector(
                     onTap: isFuture
                         ? null
                         : () {
-                            final date = _dateStr(DateTime(
-                                _viewMonth.year, _viewMonth.month, dayNum));
-                            habits.toggleCompletion(habit.id, date: date);
-                          },
+                      final date = _dateStr(DateTime(
+                          _viewMonth.year,
+                          _viewMonth.month,
+                          dayNum));
+                      habits.toggleCompletion(habit.id, date: date);
+                    },
                     child: Container(
                       height: 36,
                       margin: const EdgeInsets.all(1),
@@ -424,11 +503,12 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                         color: isCompleted
                             ? color.withValues(alpha: 0.8)
                             : (isToday
-                                ? color.withValues(alpha: 0.08)
-                                : Colors.transparent),
+                            ? color.withValues(alpha: 0.08)
+                            : Colors.transparent),
                         borderRadius: BorderRadius.circular(8),
                         border: isToday && !isCompleted
-                            ? Border.all(color: color.withValues(alpha: 0.4))
+                            ? Border.all(
+                            color: color.withValues(alpha: 0.4))
                             : null,
                       ),
                       child: Center(
@@ -441,8 +521,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                               color: isCompleted
                                   ? Colors.white
                                   : (isFuture
-                                      ? _D.textSec.withValues(alpha: 0.3)
-                                      : _D.textSec),
+                                  ? _D.textSec(context)
+                                  .withValues(alpha: 0.3)
+                                  : _D.textSec(context)),
                             )),
                       ),
                     ),
@@ -456,16 +537,17 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     );
   }
 
-  // ── 90-day heat map ──
+  // ── 90-day heat map ──────────────────────────────────────────────────────
   Widget _buildHeatMap(HabitProvider habits, Habit habit, Color color) {
     final recent = habits.getRecentDays(habit.id, 90);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _D.card,
+        color: _D.card(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.03)),
+        border: Border.all(color: _D.border(context)),
+        boxShadow: _D.shadow(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -474,7 +556,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
               style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white)),
+                  color: _D.textPrimary(context))),
           const SizedBox(height: 12),
           Wrap(
             spacing: 3,
@@ -486,7 +568,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                 decoration: BoxDecoration(
                   color: entry.value
                       ? color.withValues(alpha: 0.85)
-                      : Colors.white.withValues(alpha: 0.04),
+                      : _D.surface(context),
                   borderRadius: BorderRadius.circular(2),
                 ),
               );
@@ -496,22 +578,26 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
           Row(
             children: [
               Text('Less',
-                  style: GoogleFonts.inter(fontSize: 9, color: _D.textSec)),
+                  style: GoogleFonts.inter(
+                      fontSize: 9, color: _D.textSec(context))),
               const SizedBox(width: 4),
               ...List.generate(
                   4,
-                  (i) => Container(
-                        width: 10,
-                        height: 10,
-                        margin: const EdgeInsets.symmetric(horizontal: 1),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.2 + i * 0.25),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      )),
+                      (i) => Container(
+                    width: 10,
+                    height: 10,
+                    margin:
+                    const EdgeInsets.symmetric(horizontal: 1),
+                    decoration: BoxDecoration(
+                      color:
+                      color.withValues(alpha: 0.2 + i * 0.25),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  )),
               const SizedBox(width: 4),
               Text('More',
-                  style: GoogleFonts.inter(fontSize: 9, color: _D.textSec)),
+                  style: GoogleFonts.inter(
+                      fontSize: 9, color: _D.textSec(context))),
             ],
           ),
         ],

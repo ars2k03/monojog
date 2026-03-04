@@ -109,71 +109,71 @@ class TaskModel {
   String get categoryEmoji {
     switch (category) {
       case TaskCategory.work:
-        return '??';
+        return '💼';
       case TaskCategory.study:
-        return '??';
+        return '📚';
       case TaskCategory.personal:
-        return '??';
+        return '🙂';
       case TaskCategory.health:
-        return '??';
+        return '💪';
       case TaskCategory.creative:
-        return '??';
+        return '🎨';
       case TaskCategory.other:
-        return '??';
+        return '📌';
     }
   }
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'name': name,
-        'description': description,
-        'due_date': dueDate.millisecondsSinceEpoch,
-        'due_time': dueTime?.millisecondsSinceEpoch,
-        'priority': priority.index,
-        'status': status.index,
-        'created_at': createdAt.millisecondsSinceEpoch,
-        'completed_at': completedAt?.millisecondsSinceEpoch,
-        'has_reminder': hasReminder ? 1 : 0,
-        'attachment_path': attachmentPath,
-        'category': category.index,
-        'estimated_minutes': estimatedMinutes,
-        'elapsed_seconds': elapsedSeconds,
-        'subtasks': subtasks.join('|||'),
-        'subtasks_done': subtasksDone.map((b) => b ? '1' : '0').join(','),
-        'recurring_rule': recurringRule,
-      };
+    'id': id,
+    'name': name,
+    'description': description,
+    'due_date': dueDate.millisecondsSinceEpoch,
+    'due_time': dueTime?.millisecondsSinceEpoch,
+    'priority': priority.index,
+    'status': status.index,
+    'created_at': createdAt.millisecondsSinceEpoch,
+    'completed_at': completedAt?.millisecondsSinceEpoch,
+    'has_reminder': hasReminder ? 1 : 0,
+    'attachment_path': attachmentPath,
+    'category': category.index,
+    'estimated_minutes': estimatedMinutes,
+    'elapsed_seconds': elapsedSeconds,
+    'subtasks': subtasks.join('|||'),
+    'subtasks_done': subtasksDone.map((b) => b ? '1' : '0').join(','),
+    'recurring_rule': recurringRule,
+  };
 
   factory TaskModel.fromMap(Map<String, dynamic> map) => TaskModel(
-        id: map['id'] as String,
-        name: map['name'] as String,
-        description: map['description'] as String?,
-        dueDate: DateTime.fromMillisecondsSinceEpoch(map['due_date'] as int),
-        dueTime: map['due_time'] != null
-            ? DateTime.fromMillisecondsSinceEpoch(map['due_time'] as int)
-            : null,
-        priority: TaskPriority.values[map['priority'] as int? ?? 1],
-        status: TaskStatus.values[map['status'] as int? ?? 0],
-        createdAt:
-            DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
-        completedAt: map['completed_at'] != null
-            ? DateTime.fromMillisecondsSinceEpoch(map['completed_at'] as int)
-            : null,
-        hasReminder: (map['has_reminder'] as int? ?? 0) == 1,
-        attachmentPath: map['attachment_path'] as String?,
-        category: TaskCategory.values[(map['category'] as int?) ?? 5],
-        estimatedMinutes: map['estimated_minutes'] as int? ?? 0,
-        elapsedSeconds: map['elapsed_seconds'] as int? ?? 0,
-        subtasks: (map['subtasks'] as String?)?.isNotEmpty == true
-            ? (map['subtasks'] as String).split('|||')
-            : [],
-        subtasksDone: (map['subtasks_done'] as String?)?.isNotEmpty == true
-            ? (map['subtasks_done'] as String)
-                .split(',')
-                .map((s) => s == '1')
-                .toList()
-            : [],
-        recurringRule: map['recurring_rule'] as String?,
-      );
+    id: map['id'] as String,
+    name: map['name'] as String,
+    description: map['description'] as String?,
+    dueDate: DateTime.fromMillisecondsSinceEpoch(map['due_date'] as int),
+    dueTime: map['due_time'] != null
+        ? DateTime.fromMillisecondsSinceEpoch(map['due_time'] as int)
+        : null,
+    priority: TaskPriority.values[map['priority'] as int? ?? 1],
+    status: TaskStatus.values[map['status'] as int? ?? 0],
+    createdAt:
+    DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
+    completedAt: map['completed_at'] != null
+        ? DateTime.fromMillisecondsSinceEpoch(map['completed_at'] as int)
+        : null,
+    hasReminder: (map['has_reminder'] as int? ?? 0) == 1,
+    attachmentPath: map['attachment_path'] as String?,
+    category: TaskCategory.values[(map['category'] as int?) ?? 5],
+    estimatedMinutes: map['estimated_minutes'] as int? ?? 0,
+    elapsedSeconds: map['elapsed_seconds'] as int? ?? 0,
+    subtasks: (map['subtasks'] as String?)?.isNotEmpty == true
+        ? (map['subtasks'] as String).split('|||')
+        : [],
+    subtasksDone: (map['subtasks_done'] as String?)?.isNotEmpty == true
+        ? (map['subtasks_done'] as String)
+        .split(',')
+        .map((s) => s == '1')
+        .toList()
+        : [],
+    recurringRule: map['recurring_rule'] as String?,
+  );
 
   TaskModel copyWith({
     String? id,

@@ -88,20 +88,7 @@ class TaskScreen extends StatefulWidget {
 }
 
 class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
-  late TabController _tabController;
   int _viewMode = 0; // 0 = list, 1 = calendar, 2 = analytics
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -192,11 +179,13 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // PROGRESS CARD
+  // PROGRESS CARD  ← FIX: percentage text was overflowing the circle
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildProgressCard(TaskProvider prov) {
     final rate = prov.todayCompletionRate;
     final isDark = _TC.isDark(context);
+    final pctText = rate >= 1.0 ? '✓' : '${(rate * 100).round()}%';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
@@ -222,25 +211,34 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
         ),
         child: Row(
           children: [
+            // FIX: use fixed size + FittedBox so the text never overflows
             SizedBox(
-              width: 56,
-              height: 56,
+              width: 64,
+              height: 64,
               child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  CircularProgressIndicator(
-                    value: rate,
-                    strokeWidth: 5,
-                    backgroundColor: _TC.purple.withValues(alpha: 0.15),
-                    valueColor: const AlwaysStoppedAnimation(_TC.done),
-                    strokeCap: StrokeCap.round,
+                  SizedBox.expand(
+                    child: CircularProgressIndicator(
+                      value: rate,
+                      strokeWidth: 5,
+                      backgroundColor: _TC.purple.withValues(alpha: 0.15),
+                      valueColor: const AlwaysStoppedAnimation(_TC.done),
+                      strokeCap: StrokeCap.round,
+                    ),
                   ),
-                  Center(
-                    child: Text(
-                      '${(rate * 100).round()}%',
-                      style: TextStyle(
-                        color: _TC.textPrimary(context),
-                        fontWeight: FontWeight.w900,
-                        fontSize: 14,
+                  // FittedBox prevents text from spilling outside the circle
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        pctText,
+                        style: TextStyle(
+                          color: _TC.textPrimary(context),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ),
@@ -630,12 +628,16 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  color: isDone ? _TC.textSec(context) : _TC.textPrimary(context),
-                  decoration: isDone ? TextDecoration.lineThrough : null,
+                  color: isDone
+                      ? _TC.textSec(context)
+                      : _TC.textPrimary(context),
+                  decoration:
+                  isDone ? TextDecoration.lineThrough : null,
                   decorationColor: _TC.textSec(context),
                 ),
               ),
-              if (task.description != null && task.description!.isNotEmpty) ...[
+              if (task.description != null &&
+                  task.description!.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(
                   task.description!,
@@ -657,8 +659,10 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                         child: LinearProgressIndicator(
                           value: task.subtaskProgress,
                           minHeight: 4,
-                          backgroundColor: _TC.purple.withValues(alpha: 0.12),
-                          valueColor: const AlwaysStoppedAnimation(_TC.done),
+                          backgroundColor:
+                          _TC.purple.withValues(alpha: 0.12),
+                          valueColor:
+                          const AlwaysStoppedAnimation(_TC.done),
                         ),
                       ),
                     ),
@@ -679,12 +683,14 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                   if (task.elapsedSeconds > 0 || isTimerOn) ...[
                     Icon(Icons.timer_rounded,
                         size: 14,
-                        color: isTimerOn ? _TC.done : _TC.textSec(context)),
+                        color:
+                        isTimerOn ? _TC.done : _TC.textSec(context)),
                     const SizedBox(width: 4),
                     Text(
                       task.formattedElapsed,
                       style: TextStyle(
-                        color: isTimerOn ? _TC.done : _TC.textSec(context),
+                        color:
+                        isTimerOn ? _TC.done : _TC.textSec(context),
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
@@ -906,18 +912,20 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
               padding: const EdgeInsets.only(top: 24),
               child: Text(
                 'No tasks for ${DateFormat('MMM dd').format(prov.selectedDate)}',
-                style: TextStyle(color: _TC.textSec(context), fontSize: 14),
+                style:
+                TextStyle(color: _TC.textSec(context), fontSize: 14),
               ),
             )
           else
-            ...prov.tasksForSelectedDate.map((t) => _buildTaskCard(t, prov)),
+            ...prov.tasksForSelectedDate
+                .map((t) => _buildTaskCard(t, prov)),
         ],
       ),
     );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // ANALYTICS VIEW
+  // ANALYTICS VIEW  ← FIX: chart days now align Mon–Sun correctly
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildAnalyticsView(TaskProvider prov) {
     final weekCompletion = prov.weeklyCompletionData;
@@ -925,7 +933,16 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
     final maxCompletion =
     weekCompletion.fold<int>(0, (a, b) => a > b ? a : b);
     final maxTime = weekTime.fold<int>(0, (a, b) => a > b ? a : b);
-    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    // FIX: days aligned to weeklyCompletionData which is last-7-days from Mon
+    // provider generates data as [6-days-ago … today], so label accordingly
+    final now = DateTime.now();
+    final days = List.generate(7, (i) {
+      final d = now.subtract(Duration(days: 6 - i));
+      return DateFormat('E').format(d).substring(0, 2);
+    });
+    final todayChartIndex = 6; // last item is always today
+
     final catMap = prov.categoryTimeMap;
 
     return SingleChildScrollView(
@@ -937,7 +954,9 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
             children: [
               Expanded(
                   child: _analyticsCard(
-                      'Total Done', '${prov.totalCompletedAllTime}', _TC.done)),
+                      'Total Done',
+                      '${prov.totalCompletedAllTime}',
+                      _TC.done)),
               const SizedBox(width: 12),
               Expanded(
                   child: _analyticsCard(
@@ -945,7 +964,9 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
               const SizedBox(width: 12),
               Expanded(
                   child: _analyticsCard(
-                      'Today Time', prov.todayTotalTimeFormatted, _TC.purple)),
+                      'Today Time',
+                      prov.todayTotalTimeFormatted,
+                      _TC.purple)),
             ],
           ),
           const SizedBox(height: 24),
@@ -963,7 +984,7 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                 final h = maxCompletion > 0
                     ? (weekCompletion[i] / maxCompletion) * 110
                     : 0.0;
-                final isToday = i == DateTime.now().weekday - 1;
+                final isToday = i == todayChartIndex;
                 return Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -998,20 +1019,25 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                   : _TC.isDark(context)
                                   ? [
                                 _TC.purpleBg(context),
-                                _TC.purple.withValues(alpha: 0.4)
+                                _TC.purple
+                                    .withValues(alpha: 0.4)
                               ]
                                   : [
-                                _TC.purple.withValues(alpha: 0.2),
-                                _TC.purple.withValues(alpha: 0.08)
+                                _TC.purple
+                                    .withValues(alpha: 0.2),
+                                _TC.purple
+                                    .withValues(alpha: 0.08)
                               ],
                             ),
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          days[i].substring(0, 2),
+                          days[i],
                           style: TextStyle(
-                            color: isToday ? _TC.done : _TC.textSec(context),
+                            color: isToday
+                                ? _TC.done
+                                : _TC.textSec(context),
                             fontWeight: FontWeight.w600,
                             fontSize: 11,
                           ),
@@ -1038,7 +1064,7 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                 final h =
                 maxTime > 0 ? (weekTime[i] / maxTime) * 110 : 0.0;
                 final mins = weekTime[i] ~/ 60;
-                final isToday = i == DateTime.now().weekday - 1;
+                final isToday = i == todayChartIndex;
                 return Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -1071,7 +1097,7 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          days[i].substring(0, 2),
+                          days[i],
                           style: TextStyle(
                             color: isToday
                                 ? _TC.purple
@@ -1149,14 +1175,19 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
       ),
       child: Column(
         children: [
-          Text(
-            value,
-            style: TextStyle(
-                color: color, fontWeight: FontWeight.w900, fontSize: 22),
+          // FIX: FittedBox so long values (e.g. "1h 20m") don't overflow
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                  color: color, fontWeight: FontWeight.w900, fontSize: 22),
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
+            textAlign: TextAlign.center,
             style: TextStyle(
                 color: _TC.textSec(context),
                 fontWeight: FontWeight.w600,
@@ -1239,7 +1270,8 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                 child: Text(
                                   isDone ? 'Undo' : 'Complete',
                                   style: TextStyle(
-                                    color: isDone ? _TC.done : _TC.purple,
+                                    color:
+                                    isDone ? _TC.done : _TC.purple,
                                     fontWeight: FontWeight.w800,
                                     fontSize: 13,
                                   ),
@@ -1258,8 +1290,7 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                 _TC.purpleLight),
                             _detailChip(currentTask.priorityLabel,
                                 _getPriorityColor(currentTask.priority)),
-                            _detailChip(
-                                currentTask.formattedDueDate,
+                            _detailChip(currentTask.formattedDueDate,
                                 _TC.textSec(context)),
                             if (currentTask.formattedDueTime.isNotEmpty)
                               _detailChip(currentTask.formattedDueTime,
@@ -1283,13 +1314,15 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                           decoration: BoxDecoration(
                             color: _TC.card(context),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: _TC.border(context)),
+                            border:
+                            Border.all(color: _TC.border(context)),
                             boxShadow: _TC.cardShadow(context),
                           ),
                           child: Row(
                             children: [
                               Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                crossAxisAlignment:
+                                CrossAxisAlignment.start,
                                 children: [
                                   Text('Time Tracked',
                                       style: TextStyle(
@@ -1314,9 +1347,11 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                 GestureDetector(
                                   onTap: () {
                                     if (isTimerOn) {
-                                      prov.stopTaskTimer(currentTask.id);
+                                      prov.stopTaskTimer(
+                                          currentTask.id);
                                     } else {
-                                      prov.startTaskTimer(currentTask.id);
+                                      prov.startTaskTimer(
+                                          currentTask.id);
                                     }
                                     setS(() {});
                                   },
@@ -1329,13 +1364,13 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                         colors: isTimerOn
                                             ? [
                                           _TC.high,
-                                          _TC.high
-                                              .withValues(alpha: 0.7)
+                                          _TC.high.withValues(
+                                              alpha: 0.7)
                                         ]
                                             : [
                                           _TC.done,
-                                          _TC.done
-                                              .withValues(alpha: 0.7)
+                                          _TC.done.withValues(
+                                              alpha: 0.7)
                                         ],
                                       ),
                                     ),
@@ -1361,60 +1396,67 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                 fontSize: 15),
                           ),
                           const SizedBox(height: 10),
-                          ...List.generate(currentTask.subtasks.length, (i) {
-                            final subDone =
-                                i < currentTask.subtasksDone.length &&
-                                    currentTask.subtasksDone[i];
-                            return GestureDetector(
-                              onTap: () {
-                                prov.toggleSubtask(currentTask.id, i);
-                                setS(() {});
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 22,
-                                      height: 22,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: subDone
-                                            ? _TC.done
-                                            .withValues(alpha: 0.2)
-                                            : Colors.transparent,
-                                        border: Border.all(
+                          ...List.generate(currentTask.subtasks.length,
+                                  (i) {
+                                final subDone =
+                                    i < currentTask.subtasksDone.length &&
+                                        currentTask.subtasksDone[i];
+                                return GestureDetector(
+                                  onTap: () {
+                                    prov.toggleSubtask(
+                                        currentTask.id, i);
+                                    setS(() {});
+                                  },
+                                  child: Padding(
+                                    padding:
+                                    const EdgeInsets.only(bottom: 8),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 22,
+                                          height: 22,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
                                             color: subDone
                                                 ? _TC.done
-                                                : _TC.textSec(context),
-                                            width: 1.5),
-                                      ),
-                                      child: subDone
-                                          ? const Icon(Icons.check_rounded,
-                                          color: _TC.done, size: 14)
-                                          : null,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        currentTask.subtasks[i],
-                                        style: TextStyle(
-                                          color: subDone
-                                              ? _TC.textSec(context)
-                                              : _TC.textPrimary(context),
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14,
-                                          decoration: subDone
-                                              ? TextDecoration.lineThrough
+                                                .withValues(alpha: 0.2)
+                                                : Colors.transparent,
+                                            border: Border.all(
+                                                color: subDone
+                                                    ? _TC.done
+                                                    : _TC.textSec(context),
+                                                width: 1.5),
+                                          ),
+                                          child: subDone
+                                              ? const Icon(
+                                              Icons.check_rounded,
+                                              color: _TC.done,
+                                              size: 14)
                                               : null,
                                         ),
-                                      ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            currentTask.subtasks[i],
+                                            style: TextStyle(
+                                              color: subDone
+                                                  ? _TC.textSec(context)
+                                                  : _TC.textPrimary(
+                                                  context),
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                              decoration: subDone
+                                                  ? TextDecoration
+                                                  .lineThrough
+                                                  : null,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }),
+                                  ),
+                                );
+                              }),
                         ],
                         const SizedBox(height: 20),
                         SizedBox(
@@ -1424,8 +1466,10 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                               prov.deleteTask(currentTask.id);
                               Navigator.pop(ctx);
                             },
-                            icon: const Icon(Icons.delete_outline_rounded,
-                                color: _TC.high, size: 18),
+                            icon: const Icon(
+                                Icons.delete_outline_rounded,
+                                color: _TC.high,
+                                size: 18),
                             label: const Text('Delete Task',
                                 style: TextStyle(
                                     color: _TC.high,
@@ -1456,7 +1500,9 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
       ),
       child: Text(label,
           style: TextStyle(
-              color: color, fontWeight: FontWeight.w700, fontSize: 12)),
+              color: color,
+              fontWeight: FontWeight.w700,
+              fontSize: 12)),
     );
   }
 
@@ -1537,7 +1583,8 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                        color: _TC.textSec(context).withValues(alpha: 0.3),
+                        color:
+                        _TC.textSec(context).withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(2)),
                   ),
                   Padding(
@@ -1563,7 +1610,10 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                   const SizedBox(height: 16),
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(20, 0, 20,
+                      padding: EdgeInsets.fromLTRB(
+                          20,
+                          0,
+                          20,
                           MediaQuery.of(ctx).viewInsets.bottom + 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1588,20 +1638,12 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                             runSpacing: 8,
                             children: TaskCategory.values.map((c) {
                               final isSel = selectedCategory == c;
-                              final label = TaskModel(
+                              final tmp = TaskModel(
                                   id: '',
                                   name: '',
                                   dueDate: DateTime.now(),
                                   createdAt: DateTime.now(),
-                                  category: c)
-                                  .categoryLabel;
-                              final emoji = TaskModel(
-                                  id: '',
-                                  name: '',
-                                  dueDate: DateTime.now(),
-                                  createdAt: DateTime.now(),
-                                  category: c)
-                                  .categoryEmoji;
+                                  category: c);
                               return GestureDetector(
                                 onTap: () =>
                                     setS(() => selectedCategory = c),
@@ -1612,9 +1654,11 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                       horizontal: 12, vertical: 8),
                                   decoration: BoxDecoration(
                                     color: isSel
-                                        ? _TC.purple.withValues(alpha: 0.15)
+                                        ? _TC.purple
+                                        .withValues(alpha: 0.15)
                                         : _TC.card(context),
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius:
+                                    BorderRadius.circular(12),
                                     border: Border.all(
                                       color: isSel
                                           ? _TC.purple
@@ -1623,7 +1667,7 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                     ),
                                   ),
                                   child: Text(
-                                    '$emoji $label',
+                                    '${tmp.categoryEmoji} ${tmp.categoryLabel}',
                                     style: TextStyle(
                                       color: isSel
                                           ? _TC.purpleLight
@@ -1652,14 +1696,17 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                         await showDatePicker(
                                           context: ctx2,
                                           initialDate: selectedDate,
-                                          firstDate: DateTime.now()
-                                              .subtract(const Duration(
+                                          firstDate:
+                                          DateTime.now().subtract(
+                                              const Duration(
+                                                  days: 365)),
+                                          lastDate: DateTime.now()
+                                              .add(const Duration(
                                               days: 365)),
-                                          lastDate: DateTime.now().add(
-                                              const Duration(days: 365)),
                                           builder: (c, child) => Theme(
                                             data: _TC.isDark(context)
-                                                ? ThemeData.dark().copyWith(
+                                                ? ThemeData.dark()
+                                                .copyWith(
                                                 colorScheme:
                                                 const ColorScheme
                                                     .dark(
@@ -1667,18 +1714,21 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                                   surface: Color(
                                                       0xFF1A1730),
                                                 ))
-                                                : ThemeData.light().copyWith(
+                                                : ThemeData.light()
+                                                .copyWith(
                                                 colorScheme:
                                                 const ColorScheme
                                                     .light(
                                                   primary: _TC.purple,
-                                                  surface: Colors.white,
+                                                  surface:
+                                                  Colors.white,
                                                 )),
                                             child: child!,
                                           ),
                                         );
                                         if (picked != null) {
-                                          setS(() => selectedDate = picked);
+                                          setS(() =>
+                                          selectedDate = picked);
                                         }
                                       },
                                       child: _dateTimeBox(
@@ -1706,7 +1756,8 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                           initialTime: TimeOfDay.now(),
                                           builder: (c, child) => Theme(
                                             data: _TC.isDark(context)
-                                                ? ThemeData.dark().copyWith(
+                                                ? ThemeData.dark()
+                                                .copyWith(
                                                 colorScheme:
                                                 const ColorScheme
                                                     .dark(
@@ -1714,12 +1765,14 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                                   surface: Color(
                                                       0xFF1A1730),
                                                 ))
-                                                : ThemeData.light().copyWith(
+                                                : ThemeData.light()
+                                                .copyWith(
                                                 colorScheme:
                                                 const ColorScheme
                                                     .light(
                                                   primary: _TC.purple,
-                                                  surface: Colors.white,
+                                                  surface:
+                                                  Colors.white,
                                                 )),
                                             child: child!,
                                           ),
@@ -1836,7 +1889,8 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                           const SizedBox(height: 8),
                           ...subtasks.asMap().entries.map((e) {
                             return Padding(
-                              padding: const EdgeInsets.only(bottom: 6),
+                              padding:
+                              const EdgeInsets.only(bottom: 6),
                               child: Row(
                                 children: [
                                   Icon(
@@ -1848,7 +1902,8 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                   Expanded(
                                     child: Text(e.value,
                                         style: TextStyle(
-                                            color: _TC.textPrimary(context),
+                                            color:
+                                            _TC.textPrimary(context),
                                             fontSize: 14)),
                                   ),
                                   GestureDetector(
@@ -1902,8 +1957,8 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                 onTap: () {
                                   if (subtaskCtrl.text.trim().isNotEmpty) {
                                     setS(() {
-                                      subtasks
-                                          .add(subtaskCtrl.text.trim());
+                                      subtasks.add(
+                                          subtaskCtrl.text.trim());
                                       subtaskCtrl.clear();
                                     });
                                   }
@@ -1912,9 +1967,10 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                   width: 40,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    color:
-                                    _TC.purple.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(12),
+                                    color: _TC.purple
+                                        .withValues(alpha: 0.15),
+                                    borderRadius:
+                                    BorderRadius.circular(12),
                                     border: Border.all(
                                         color: _TC.purple
                                             .withValues(alpha: 0.3)),
@@ -1973,10 +2029,12 @@ class _TaskScreenState extends State<TaskScreen> with TickerProviderStateMixin {
                                   category: selectedCategory,
                                   estimatedMinutes: estimatedMinutes,
                                   subtasks: subtasks,
-                                  subtasksDone:
-                                  List.filled(subtasks.length, false),
+                                  subtasksDone: List.filled(
+                                      subtasks.length, false),
                                 );
-                                context.read<TaskProvider>().addTask(task);
+                                context
+                                    .read<TaskProvider>()
+                                    .addTask(task);
                                 Navigator.pop(ctx);
                               },
                               style: ElevatedButton.styleFrom(
