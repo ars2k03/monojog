@@ -10,55 +10,75 @@ import 'package:monojog/services/history_service.dart';
 
 /// Unified focus intensity levels
 enum FocusLevel {
-  light,    // 1 - DND only: silence all notifications
-  moderate, // 2 - Block reels/ads in social media + block selected apps
-  deep,     // 3 - Block ALL installed apps
-  strict,   // 4 - Block everything + cannot quit + only emergency calls
+  light,
+  moderate,
+  deep,
+  strict,
 }
 
 extension FocusLevelX on FocusLevel {
   String get label {
     switch (this) {
-      case FocusLevel.light:    return 'Light Focus';
-      case FocusLevel.moderate: return 'Focused';
-      case FocusLevel.deep:     return 'Deep Focus';
-      case FocusLevel.strict:   return 'Strict Mode';
+      case FocusLevel.light:
+        return 'Light Focus';
+      case FocusLevel.moderate:
+        return 'Focused';
+      case FocusLevel.deep:
+        return 'Deep Focus';
+      case FocusLevel.strict:
+        return 'Strict Mode';
     }
   }
 
   String get subtitle {
     switch (this) {
-      case FocusLevel.light:    return 'Silence all notifications';
-      case FocusLevel.moderate: return 'Block distracting apps & reels';
-      case FocusLevel.deep:     return 'Block every app on your phone';
-      case FocusLevel.strict:   return 'Locked in — only emergencies';
+      case FocusLevel.light:
+        return 'Silence all notifications';
+      case FocusLevel.moderate:
+        return 'Block distracting apps & reels';
+      case FocusLevel.deep:
+        return 'Block every app on your phone';
+      case FocusLevel.strict:
+        return 'Locked in — only emergencies';
     }
   }
 
   String get emoji {
     switch (this) {
-      case FocusLevel.light:    return '🔔';
-      case FocusLevel.moderate: return '🛡️';
-      case FocusLevel.deep:     return '🔒';
-      case FocusLevel.strict:   return '⛔';
+      case FocusLevel.light:
+        return '🔔';
+      case FocusLevel.moderate:
+        return '🛡️';
+      case FocusLevel.deep:
+        return '🔒';
+      case FocusLevel.strict:
+        return '⛔';
     }
   }
 
   Color get color {
     switch (this) {
-      case FocusLevel.light:    return const Color(0xFF7C4DFF);
-      case FocusLevel.moderate: return const Color(0xFF00E5FF);
-      case FocusLevel.deep:     return const Color(0xFFFF6B35);
-      case FocusLevel.strict:   return const Color(0xFFFF4D6D);
+      case FocusLevel.light:
+        return const Color(0xFF7C4DFF);
+      case FocusLevel.moderate:
+        return const Color(0xFF00E5FF);
+      case FocusLevel.deep:
+        return const Color(0xFFFF6B35);
+      case FocusLevel.strict:
+        return const Color(0xFFFF4D6D);
     }
   }
 
   IconData get icon {
     switch (this) {
-      case FocusLevel.light:    return Icons.notifications_off_rounded;
-      case FocusLevel.moderate: return Icons.shield_rounded;
-      case FocusLevel.deep:     return Icons.lock_rounded;
-      case FocusLevel.strict:   return Icons.block_rounded;
+      case FocusLevel.light:
+        return Icons.notifications_off_rounded;
+      case FocusLevel.moderate:
+        return Icons.shield_rounded;
+      case FocusLevel.deep:
+        return Icons.lock_rounded;
+      case FocusLevel.strict:
+        return Icons.block_rounded;
     }
   }
 
@@ -98,7 +118,7 @@ extension FocusLevelX on FocusLevel {
 class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
   static const platform = MethodChannel('com.monojog.app/focus');
   static const MethodChannel _blockChannel =
-  MethodChannel("com.monojog.app/blocker");
+  MethodChannel('com.monojog.app/blocker');
 
   final DatabaseService _db = DatabaseService.instance;
   final Uuid _uuid = const Uuid();
@@ -121,7 +141,7 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
   bool _showBreathing = true;
   bool _allowEmergencyCalls = true;
 
-  // -- DND: user এর উপর নির্ভর --
+  // -- DND --
   bool _enableDND = true;
 
   int _pomodoroCount = 0;
@@ -139,7 +159,10 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
   int _totalPenaltySeconds = 0;
   bool _appInBackground = false;
 
-  // -- Getters --
+  // ═══════════════════════════════
+  // GETTERS
+  // ═════════════════════���═════════
+
   FocusSession? get currentFocusSession => _currentFocusSession;
   List<BlockedApp> get blockedApps => _blockedApps;
   List<InstalledApp> get installedApps => _installedApps;
@@ -152,11 +175,8 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
   FocusLevel get focusLevel => _focusLevel;
   bool get showBreathing => _showBreathing;
   bool get allowEmergencyCalls => _allowEmergencyCalls;
-
-  // ── DND getter: এখন user controllable ──
   bool get enableDND => _enableDND;
 
-  // Derived from focus level
   bool get isStrictMode => _focusLevel == FocusLevel.strict;
   bool get blockAllApps =>
       _focusLevel == FocusLevel.deep || _focusLevel == FocusLevel.strict;
@@ -174,7 +194,7 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
 
   bool get isSessionRunning => _isFocusActive || _isOnBreak;
 
-  /// Global session type currently active (for cross-provider sync)
+  /// Global session type
   static String? _globalActiveSession;
   static String? get globalActiveSession => _globalActiveSession;
   static bool get isAnySessionActive => _globalActiveSession != null;
@@ -203,22 +223,28 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     return elapsed ~/ 60;
   }
 
+  // ═══════════════════════════════
+  // CONSTRUCTOR & INIT
+  // ═══════════════════════════════
 
-  Future<void> _saveBlockedAppsToNative() async {
-    try {
-      final blockedPackages =
-      _blockedApps.map((app) => app.packageName).toList();
-
-      await _blockChannel.invokeMethod(
-        "saveBlockedApps",
-        blockedPackages,
-      );
-    } catch (e) {
-      debugPrint("Failed to save blocked apps: $e");
-    }
+  FocusProvider() {
+    WidgetsBinding.instance.addObserver(this);
+    _initialize();
   }
 
-  // -- Setters --
+  Future<void> _initialize() async {
+    await _loadSettings();
+    await _loadBlockedApps();
+    await checkPermissions();
+    await loadInstalledApps();
+    await _syncBlockingState();
+    await _syncAndroidWidget();
+  }
+
+  // ═══════════════════════════════
+  // SETTERS
+  // ═══════════════════════════════
+
   void setFocusLevel(FocusLevel level) {
     _focusLevel = level;
     _saveSettings();
@@ -237,7 +263,6 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     notifyListeners();
   }
 
-  // ── DND setter: এখন user on/off করতে পারবে ──
   void setEnableDND(bool v) {
     _enableDND = v;
     _saveSettings();
@@ -264,25 +289,16 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     notifyListeners();
   }
 
-  // -- Backward compat stubs --
+  // Backward compat
   void setStrictMode(bool v) =>
       setFocusLevel(v ? FocusLevel.strict : FocusLevel.moderate);
   void setBlockAllApps(bool v) =>
       setFocusLevel(v ? FocusLevel.deep : FocusLevel.moderate);
   void setBreakMinutes(int v) => setShortBreakMinutes(v);
 
-  FocusProvider() {
-    WidgetsBinding.instance.addObserver(this);
-    _initialize();
-  }
-
-  Future<void> _initialize() async {
-    await _loadSettings();
-    await _loadBlockedApps();
-    await checkPermissions();
-    await loadInstalledApps();
-    await _syncAndroidWidget();
-  }
+  // ═══════════════════════════════
+  // PERMISSIONS
+  // ═══════════════════════════════
 
   Future<void> checkPermissions() async {
     try {
@@ -317,6 +333,10 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     }
   }
 
+  // ═══════════════════════════════
+  // INSTALLED APPS
+  // ═══════════════════════════════
+
   Future<void> loadInstalledApps() async {
     try {
       final result = await platform.invokeMethod('getInstalledApps');
@@ -327,8 +347,7 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
           InstalledApp.fromMap(Map<String, dynamic>.from(app)))
           .toList()
         ..sort((a, b) =>
-            a.appName.toLowerCase()
-                .compareTo(b.appName.toLowerCase()));
+            a.appName.toLowerCase().compareTo(b.appName.toLowerCase()));
 
       notifyListeners();
     } on PlatformException catch (e) {
@@ -336,14 +355,70 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     }
   }
 
+  // ═══════════════════════════════
+  // BLOCKED APPS — Toggle Block
+  // ═══════════════════════════════
+
   Future<void> _loadBlockedApps() async {
     final apps = await _db.getAllAppsInBlockList();
     _blockedApps = apps.map((a) => BlockedApp.fromMap(a)).toList();
     notifyListeners();
   }
 
+  Future<void> _saveBlockedAppsToNative() async {
+    try {
+      final blockedPackages = _blockedApps
+          .where((app) => app.isBlocked)
+          .map((app) => app.packageName)
+          .toList();
+
+      debugPrint(
+          '📋 Saving ${blockedPackages.length} blocked apps to native');
+
+      await _blockChannel.invokeMethod('saveBlockedApps', blockedPackages);
+    } catch (e) {
+      debugPrint('Failed to save blocked apps: $e');
+    }
+  }
+
+  /// Toggle block + Focus session — দুইটাই handle করে
+  Future<void> _syncBlockingState() async {
+    final manuallyBlocked = _blockedApps
+        .where((app) => app.isBlocked)
+        .map((app) => app.packageName)
+        .toList();
+
+    debugPrint(
+        '🔄 Sync: ${manuallyBlocked.length} manual blocks, focusActive=$_isFocusActive');
+
+    try {
+      if (manuallyBlocked.isNotEmpty || _isFocusActive) {
+        final allBlocked = <String>{...manuallyBlocked};
+
+        // Focus session চলমান থাকলে resolved list ও merge
+        if (_isFocusActive && _currentFocusSession != null) {
+          allBlocked.addAll(_currentFocusSession!.blockedApps);
+        }
+
+        final blockList = allBlocked.toList();
+        await _blockChannel.invokeMethod('saveBlockedApps', blockList);
+        await platform.invokeMethod('startFocusMode', {
+          'blockedApps': blockList,
+          'durationMinutes': _isFocusActive ? _targetMinutes : 1440,
+        });
+        debugPrint('✅ Blocking active: ${blockList.length} apps');
+      } else {
+        await platform.invokeMethod('stopFocusMode');
+        debugPrint('✅ Blocking OFF — nothing to block');
+      }
+    } on PlatformException catch (e) {
+      debugPrint('❌ Sync failed: ${e.message}');
+    }
+  }
+
   Future<void> addBlockedApp(InstalledApp app) async {
-    final existing = _blockedApps.any((b) => b.packageName == app.packageName);
+    final existing =
+    _blockedApps.any((b) => b.packageName == app.packageName);
 
     if (existing) {
       await _db.updateBlockedApp(app.packageName, true);
@@ -358,15 +433,15 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     }
 
     await _loadBlockedApps();
-
-    await _saveBlockedAppsToNative();   // 👈 এটা যোগ করো
+    await _saveBlockedAppsToNative();
+    await _syncBlockingState();
   }
 
   Future<void> removeBlockedApp(String packageName) async {
     await _db.deleteBlockedApp(packageName);
     await _loadBlockedApps();
-
-    await _saveBlockedAppsToNative();   // 👈 এটা যোগ করো
+    await _saveBlockedAppsToNative();
+    await _syncBlockingState();
   }
 
   Future<void> toggleBlockedApp(String packageName, bool isBlocked) async {
@@ -377,9 +452,13 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     }
 
     await _loadBlockedApps();
-
-    await _saveBlockedAppsToNative();   // 👈 এটা যোগ করো
+    await _saveBlockedAppsToNative();
+    await _syncBlockingState();
   }
+
+  // ═══════════════════════════════
+  // RESOLVE BLOCKED APPS (Focus Level)
+  // ═══════════════════════════════
 
   List<String> _resolveBlockedApps() {
     switch (_focusLevel) {
@@ -414,32 +493,58 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     }
   }
 
+  // ═══════════════════════════════
+  // FOCUS SESSION — START
+  // ═══════════════════════════════
+
   Future<bool> startFocusSession() async {
+    // ── 1. Permission Check ──
+    await checkPermissions();
+
     if (!_hasAccessibilityPermission) {
+      debugPrint('❌ Accessibility permission missing');
       await platform.invokeMethod('openAccessibilitySettings');
-
-      // Wait for user to come back
-      await Future.delayed(const Duration(seconds: 1));
-      await checkPermissions();
-
-      if (!_hasAccessibilityPermission) {
-        return false;
-      }
+      return false;
     }
 
+    if (!_hasOverlayPermission) {
+      debugPrint('❌ Overlay permission missing');
+      await platform.invokeMethod('requestOverlayPermission');
+      return false;
+    }
+
+    // ── 2. Session Guard ──
     if (_isFocusActive || _isOnBreak) {
-      debugPrint('[FocusProvider] Session already active.');
+      debugPrint('⚠️ Session already active.');
       return false;
     }
     if (isAnySessionActive) {
-      debugPrint('[FocusProvider] Another session ($globalActiveSession) is active.');
+      debugPrint(
+          '⚠️ Another session ($globalActiveSession) is active.');
       return false;
     }
     claimSession('focus');
 
+    // ── 3. Resolve & Merge Blocked Apps ──
+    final focusLevelApps = _resolveBlockedApps();
+    final manuallyBlocked = _blockedApps
+        .where((app) => app.isBlocked)
+        .map((app) => app.packageName)
+        .toList();
+
+    final activeBlockedApps =
+    <String>{...focusLevelApps, ...manuallyBlocked}.toList();
+
+    debugPrint('🟢 Starting focus session');
+    debugPrint('📋 Focus level apps: ${focusLevelApps.length}');
+    debugPrint('📋 Manual blocked: ${manuallyBlocked.length}');
+    debugPrint('📋 Total merged: ${activeBlockedApps.length}');
+    debugPrint('⏱️ Duration: $_targetMinutes min');
+    debugPrint('🎯 Level: ${_focusLevel.name}');
+
+    // ── 4. Create Session ──
     final now = DateTime.now();
     final today = now.toIso8601String().split('T')[0];
-    final activeBlockedApps = _resolveBlockedApps();
 
     _currentFocusSession = FocusSession(
       id: _uuid.v4(),
@@ -457,28 +562,33 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     _lastActivityTime = DateTime.now();
     _appInBackground = false;
 
-    if (activeBlockedApps.isNotEmpty) {
-      try {
-        await platform.invokeMethod('startFocusMode', {
-          'blockedApps': activeBlockedApps,
-          'durationMinutes': _targetMinutes,
-        });
-      } on PlatformException catch (e) {
-        debugPrint('Failed to start focus mode: ${e.message}');
-      }
+    // ── 5. Activate Blocking ──
+    try {
+      await _blockChannel.invokeMethod(
+          'saveBlockedApps', activeBlockedApps);
+      await platform.invokeMethod('startFocusMode', {
+        'blockedApps': activeBlockedApps,
+        'durationMinutes': _targetMinutes,
+      });
+      debugPrint('✅ Focus mode activated');
+    } on PlatformException catch (e) {
+      debugPrint('❌ Failed: ${e.message}');
     }
 
-    // ── DND: user এর setting অনুযায়ী চালু করো ──
+    // ── 6. DND ──
     if (_enableDND) {
       try {
         await platform.invokeMethod('enableDND');
+        debugPrint('✅ DND enabled');
       } on PlatformException catch (e) {
-        debugPrint('Failed to enable DND: ${e.message}');
+        debugPrint('❌ DND failed: ${e.message}');
       }
     }
 
+    // ── 7. Save to DB ──
     await _db.insertFocusSession(_currentFocusSession!.toMap());
 
+    // ── 8. Start Timer ──
     _focusTimer?.cancel();
     _focusTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_isPaused) return;
@@ -494,8 +604,13 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
 
     await _syncAndroidWidget();
     notifyListeners();
+    debugPrint('🎯 Focus session started!');
     return true;
   }
+
+  // ═══════════════════════════════
+  // FOCUS SESSION — COMPLETE
+  // ═══════════════════════════════
 
   Future<void> completeFocusSession() async {
     if (!_isFocusActive || _currentFocusSession == null) return;
@@ -512,13 +627,7 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
       isCompleted: true,
     );
 
-    try {
-      await platform.invokeMethod('stopFocusMode');
-    } on PlatformException catch (e) {
-      debugPrint('Failed to stop focus mode: ${e.message}');
-    }
-
-    // ── DND: user এর setting অনুযায়ী বন্ধ করো ──
+    // ── DND off ──
     if (_enableDND) {
       try {
         await platform.invokeMethod('disableDND');
@@ -527,7 +636,8 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
       }
     }
 
-    await _db.updateFocusSession(completedSession.id, completedSession.toMap());
+    await _db.updateFocusSession(
+        completedSession.id, completedSession.toMap());
     await _updateDailyFocusStats(actualMinutes);
 
     try {
@@ -556,14 +666,72 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     _remainingSeconds = _targetMinutes * 60;
     releaseSession('focus');
 
-    final breakDuration =
-    _sessionsSinceLongBreak >= 4 ? _longBreakMinutes : _shortBreakMinutes;
+    // Focus শেষ হলেও manual toggle blocks active থাকবে
+    await _syncBlockingState();
+    debugPrint(
+        '📌 Focus ended. Manual blocks still active if any.');
+
+    final breakDuration = _sessionsSinceLongBreak >= 4
+        ? _longBreakMinutes
+        : _shortBreakMinutes;
     if (_sessionsSinceLongBreak >= 4) _sessionsSinceLongBreak = 0;
 
     await startBreak(durationMinutes: breakDuration);
     await _syncAndroidWidget();
     notifyListeners();
   }
+
+  // ═══════════════════════════════
+  // FOCUS SESSION — CANCEL
+  // ═══════════════════════════════
+
+  Future<void> cancelFocusSession({bool force = false}) async {
+    if (!_isFocusActive && !_isOnBreak) return;
+    if (isStrictMode && !force && _isFocusActive) return;
+
+    _focusTimer?.cancel();
+    _focusTimer = null;
+
+    // ── DND off ──
+    if (_enableDND) {
+      try {
+        await platform.invokeMethod('disableDND');
+      } on PlatformException catch (e) {
+        debugPrint('Failed to disable DND: ${e.message}');
+      }
+    }
+
+    if (_currentFocusSession != null) {
+      final now = DateTime.now();
+      final actualMinutes = _targetMinutes - (_remainingSeconds ~/ 60);
+      final cancelledSession = _currentFocusSession!.copyWith(
+        endTime: now,
+        actualDurationMinutes: actualMinutes,
+        isCompleted: false,
+      );
+      await _db.updateFocusSession(
+          cancelledSession.id, cancelledSession.toMap());
+    }
+
+    _isFocusActive = false;
+    _isOnBreak = false;
+    _isPaused = false;
+    _currentFocusSession = null;
+    _remainingSeconds = _targetMinutes * 60;
+    releaseSession('focus');
+
+    // Focus cancel হলেও manual toggle blocks active থাকবে
+    await _syncBlockingState();
+    debugPrint(
+        '📌 Focus cancelled. Manual blocks still active if any.');
+
+    await _syncAndroidWidget();
+    notifyListeners();
+  }
+
+  // ═══════════════════════════════
+  // BREAK
+  // ═══════════════════════════════
 
   Future<void> startBreak({int? durationMinutes}) async {
     _focusTimer?.cancel();
@@ -603,50 +771,9 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     notifyListeners();
   }
 
-  Future<void> cancelFocusSession({bool force = false}) async {
-    if (!_isFocusActive && !_isOnBreak) return;
-    if (isStrictMode && !force && _isFocusActive) return;
-
-    _focusTimer?.cancel();
-    _focusTimer = null;
-
-    try {
-      await platform.invokeMethod('stopFocusMode');
-    } on PlatformException catch (e) {
-      debugPrint('Failed to stop focus mode: ${e.message}');
-    }
-
-    // ── DND: user এর setting অনুযায়ী বন্ধ করো ──
-    if (_enableDND) {
-      try {
-        await platform.invokeMethod('disableDND');
-      } on PlatformException catch (e) {
-        debugPrint('Failed to disable DND: ${e.message}');
-      }
-    }
-
-    if (_currentFocusSession != null) {
-      final now = DateTime.now();
-      final actualMinutes = _targetMinutes - (_remainingSeconds ~/ 60);
-      final cancelledSession = _currentFocusSession!.copyWith(
-        endTime: now,
-        actualDurationMinutes: actualMinutes,
-        isCompleted: false,
-      );
-      await _db.updateFocusSession(
-          cancelledSession.id, cancelledSession.toMap());
-    }
-
-    _isFocusActive = false;
-    _isOnBreak = false;
-    _isPaused = false;
-    _currentFocusSession = null;
-    _remainingSeconds = _targetMinutes * 60;
-    releaseSession('focus');
-
-    await _syncAndroidWidget();
-    notifyListeners();
-  }
+  // ═══════════════════════════════
+  // PAUSE / RESUME
+  // ═══════════════════════════════
 
   void pauseFocusSession() {
     if (!_isFocusActive || _isPaused) return;
@@ -663,6 +790,10 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     notifyListeners();
   }
 
+  // ═══════════════════════════════
+  // ANTI-CHEAT
+  // ═══════════════════════════════
+
   void reportActivity() {
     _lastActivityTime = DateTime.now();
   }
@@ -671,7 +802,8 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     if (!_isFocusActive || _isOnBreak) return;
     if (!isResumed) {
       _appInBackground = true;
-      if (_focusLevel == FocusLevel.strict || _focusLevel == FocusLevel.deep) {
+      if (_focusLevel == FocusLevel.strict ||
+          _focusLevel == FocusLevel.deep) {
         _applyPenalty(_appSwitchPenaltySeconds, 'app_switch');
       }
     } else {
@@ -685,7 +817,7 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     _remainingSeconds =
         (_remainingSeconds - seconds).clamp(0, _targetMinutes * 60);
     debugPrint(
-        '[AntiCheat] Penalty $seconds s ($reason). Total: $_totalPenaltySeconds s');
+        '[AntiCheat] Penalty ${seconds}s ($reason). Total: ${_totalPenaltySeconds}s');
     if (_remainingSeconds <= 0) completeFocusSession();
   }
 
@@ -698,6 +830,10 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
       _lastActivityTime = DateTime.now();
     }
   }
+
+  // ═══════════════════════════════
+  // DAILY STATS
+  // ═══════════════════════════════
 
   Future<void> _updateDailyFocusStats(int focusMinutes) async {
     final today = DateTime.now().toIso8601String().split('T')[0];
@@ -725,21 +861,27 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     }
   }
 
+  // ═══════════════════════════════
+  // SETTINGS LOAD / SAVE
+  // ═══════════════════════════════
+
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    final levelIdx = prefs.getInt('focus.level') ?? FocusLevel.moderate.index;
-    _focusLevel =
-    FocusLevel.values[levelIdx.clamp(0, FocusLevel.values.length - 1)];
+    final levelIdx =
+        prefs.getInt('focus.level') ?? FocusLevel.moderate.index;
+    _focusLevel = FocusLevel
+        .values[levelIdx.clamp(0, FocusLevel.values.length - 1)];
     _showBreathing =
         prefs.getBool('focus.show_breathing') ?? _showBreathing;
     _allowEmergencyCalls =
-        prefs.getBool('focus.allow_emergency_calls') ?? _allowEmergencyCalls;
-    // ── DND load ──
+        prefs.getBool('focus.allow_emergency_calls') ??
+            _allowEmergencyCalls;
     _enableDND = prefs.getBool('focus.enable_dnd') ?? true;
     _targetMinutes =
         prefs.getInt('focus.target_minutes') ?? _targetMinutes;
     _shortBreakMinutes =
-        prefs.getInt('focus.short_break_minutes') ?? _shortBreakMinutes;
+        prefs.getInt('focus.short_break_minutes') ??
+            _shortBreakMinutes;
     _longBreakMinutes =
         prefs.getInt('focus.long_break_minutes') ?? _longBreakMinutes;
     if (!_isFocusActive && !_isOnBreak) {
@@ -751,13 +893,18 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('focus.level', _focusLevel.index);
     await prefs.setBool('focus.show_breathing', _showBreathing);
-    await prefs.setBool('focus.allow_emergency_calls', _allowEmergencyCalls);
-    // ── DND save ──
+    await prefs.setBool(
+        'focus.allow_emergency_calls', _allowEmergencyCalls);
     await prefs.setBool('focus.enable_dnd', _enableDND);
     await prefs.setInt('focus.target_minutes', _targetMinutes);
-    await prefs.setInt('focus.short_break_minutes', _shortBreakMinutes);
+    await prefs.setInt(
+        'focus.short_break_minutes', _shortBreakMinutes);
     await prefs.setInt('focus.long_break_minutes', _longBreakMinutes);
   }
+
+  // ═══════════════════════════════
+  // WIDGET SYNC
+  // ═══════════════════════════════
 
   Future<void> refreshHomeWidget() async {
     await _syncAndroidWidget();
@@ -775,6 +922,10 @@ class FocusProvider with ChangeNotifier, WidgetsBindingObserver {
       });
     } catch (_) {}
   }
+
+  // ═══════════════════════════════
+  // LIFECYCLE
+  // ═══════════════════════════════
 
   @override
   void dispose() {

@@ -70,21 +70,45 @@ class _FocusScreenState extends State<FocusScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // ── Adaptive colors ───────────────────────────────────────────────────
-    final bgColor      = isDark ? AppTheme.darkBg        : const Color(0xFFF0EFF8);
-    final textPrimary  = isDark ? Colors.white            : const Color(0xFF1A1A2E);
-    final textSec      = isDark ? AppTheme.darkTextSec    : Colors.grey.shade600;
-    final cardBg       = isDark ? AppTheme.darkSurface    : Colors.white;
-    final cardBorder   = isDark
+    // BUG FIX: Light mode bg was too similar to card bg — now clearly distinct
+    final bgColor = isDark
+        ? AppTheme.darkBg
+        : const Color(0xFFEEEDF7); // slightly deeper purple-tinted bg
+
+    // BUG FIX: Light mode primary text was not dark enough
+    final textPrimary = isDark
+        ? Colors.white
+        : const Color(0xFF0F0F1A); // near-black for max contrast
+
+    // BUG FIX: Light mode secondary text was too light (grey.shade600 = #757575)
+    final textSec = isDark
+        ? AppTheme.darkTextSec
+        : const Color(0xFF4A4A6A); // darker purple-grey for readability
+
+    // BUG FIX: Light mode card bg needs to stand out from page bg
+    final cardBg = isDark
+        ? AppTheme.darkSurface
+        : Colors.white; // pure white cards on tinted bg = clear separation
+
+    final cardBorder = isDark
         ? Colors.white.withValues(alpha: 0.06)
-        : Colors.grey.shade200;
-    final timerBg1     = isDark ? const Color(0xFF1E1E2E) : Colors.white;
-    final timerBg2     = isDark ? const Color(0xFF16161F) : const Color(0xFFF5F4FF);
+        : const Color(0xFFD8D6EE); // more visible border in light mode
+
+    // BUG FIX: Timer circle bg — light mode was too washed out
+    final timerBg1 = isDark
+        ? const Color(0xFF1E1E2E)
+        : Colors.white;
+    final timerBg2 = isDark
+        ? const Color(0xFF16161F)
+        : const Color(0xFFEFEEFB); // subtle purple tint
+
+    // BUG FIX: Preset unselected state — light mode was invisible
     final presetUnselBg = isDark
         ? Colors.white.withValues(alpha: 0.04)
-        : Colors.grey.shade100;
+        : const Color(0xFFF3F2FC); // tinted chip bg
     final presetUnselBorder = isDark
         ? Colors.white.withValues(alpha: 0.06)
-        : Colors.grey.shade200;
+        : const Color(0xFFCECCE8); // clearly visible border
 
     return Container(
       color: bgColor,
@@ -115,6 +139,7 @@ class _FocusScreenState extends State<FocusScreen>
                           'Choose intensity & start deep work',
                           style: GoogleFonts.inter(
                             fontSize: 13,
+                            // BUG FIX: Use textSec (not a static color) for proper contrast
                             color: textSec,
                             fontWeight: FontWeight.w500,
                           ),
@@ -140,6 +165,7 @@ class _FocusScreenState extends State<FocusScreen>
                               style: GoogleFonts.inter(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w900,
+                                  // BUG FIX: Black text on gold gradient — stays same (good contrast)
                                   color: Colors.black87)),
                         ],
                       ),
@@ -161,8 +187,10 @@ class _FocusScreenState extends State<FocusScreen>
                       colors: [timerBg1, timerBg2],
                     ),
                     border: Border.all(
-                        color: focus.focusLevel.color.withValues(alpha: 0.2),
-                        width: 2),
+                      // BUG FIX: Increased border opacity for light mode visibility
+                        color: focus.focusLevel.color
+                            .withValues(alpha: isDark ? 0.2 : 0.35),
+                        width: isDark ? 2 : 2.5),
                     boxShadow: isDark
                         ? [
                       BoxShadow(
@@ -176,13 +204,14 @@ class _FocusScreenState extends State<FocusScreen>
                           spreadRadius: 5),
                     ]
                         : [
+                      // BUG FIX: More visible shadow in light mode
                       BoxShadow(
                           color: focus.focusLevel.color
-                              .withValues(alpha: 0.15),
+                              .withValues(alpha: 0.25),
                           blurRadius: 30,
                           offset: const Offset(0, 8)),
                       BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
+                          color: Colors.black.withValues(alpha: 0.10),
                           blurRadius: 20,
                           offset: const Offset(0, 4)),
                     ],
@@ -194,6 +223,7 @@ class _FocusScreenState extends State<FocusScreen>
                           style: GoogleFonts.inter(
                               fontSize: 52,
                               fontWeight: FontWeight.w200,
+                              // BUG FIX: textPrimary ensures dark text in light mode
                               color: textPrimary)),
                       Text('minutes',
                           style: GoogleFonts.inter(
@@ -227,7 +257,7 @@ class _FocusScreenState extends State<FocusScreen>
                                 ? LinearGradient(colors: [
                               focus.focusLevel.color,
                               focus.focusLevel.color
-                                  .withValues(alpha: 0.7)
+                                  .withValues(alpha: 0.75)
                             ])
                                 : null,
                             color: isSelected ? null : presetUnselBg,
@@ -235,7 +265,9 @@ class _FocusScreenState extends State<FocusScreen>
                             border: Border.all(
                                 color: isSelected
                                     ? Colors.transparent
-                                    : presetUnselBorder),
+                                    : presetUnselBorder,
+                                // BUG FIX: Slightly thicker border for light unselected
+                                width: isSelected ? 0 : (isDark ? 1 : 1.2)),
                           ),
                           child: Text('$mins',
                               style: GoogleFonts.inter(
@@ -243,7 +275,10 @@ class _FocusScreenState extends State<FocusScreen>
                                 fontWeight: isSelected
                                     ? FontWeight.w800
                                     : FontWeight.w600,
-                                color: isSelected ? Colors.white : textSec,
+                                color: isSelected
+                                    ? Colors.white
+                                // BUG FIX: textSec instead of light grey for proper contrast
+                                    : textSec,
                               )),
                         ),
                       );
@@ -254,13 +289,15 @@ class _FocusScreenState extends State<FocusScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
+                          // BUG FIX: Light mode custom button bg was nearly invisible
                           color: isDark
                               ? Colors.white.withValues(alpha: 0.04)
-                              : AppTheme.gemColor.withValues(alpha: 0.08),
+                              : AppTheme.gemColor.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                              color:
-                              AppTheme.gemColor.withValues(alpha: 0.25)),
+                              color: AppTheme.gemColor
+                                  .withValues(alpha: isDark ? 0.25 : 0.40),
+                              width: isDark ? 1 : 1.2),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -268,12 +305,12 @@ class _FocusScreenState extends State<FocusScreen>
                             Icon(Icons.tune_rounded,
                                 size: 14,
                                 color: AppTheme.gemColor
-                                    .withValues(alpha: 0.8)),
+                                    .withValues(alpha: isDark ? 0.8 : 1.0)),
                             const SizedBox(width: 6),
                             Text('Custom',
                                 style: GoogleFonts.inter(
                                     fontSize: 13,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
                                     color: AppTheme.gemColor)),
                           ],
                         ),
@@ -299,9 +336,8 @@ class _FocusScreenState extends State<FocusScreen>
                       fontWeight: FontWeight.w500)),
               const SizedBox(height: 14),
 
-              ...FocusLevel.values.map((level) =>
-                  _buildLevelCard(focus, level, isDark, textPrimary, textSec,
-                      cardBg, cardBorder)),
+              ...FocusLevel.values.map((level) => _buildLevelCard(
+                  focus, level, isDark, textPrimary, textSec, cardBg, cardBorder)),
 
               // ── Manage Blocked Apps ───────────────────────────────────
               if (focus.focusLevel == FocusLevel.moderate) ...[
@@ -321,8 +357,9 @@ class _FocusScreenState extends State<FocusScreen>
                           ? []
                           : [
                         BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
+                          // BUG FIX: More visible shadow in light mode
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 12,
                             offset: const Offset(0, 3))
                       ],
                     ),
@@ -332,7 +369,9 @@ class _FocusScreenState extends State<FocusScreen>
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: AppTheme.errorColor.withValues(alpha: 0.1),
+                            // BUG FIX: Slightly more opaque icon bg in light mode
+                            color: AppTheme.errorColor
+                                .withValues(alpha: isDark ? 0.10 : 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.apps_rounded,
@@ -358,7 +397,11 @@ class _FocusScreenState extends State<FocusScreen>
                           ),
                         ),
                         Icon(Icons.chevron_right_rounded,
-                            color: textSec, size: 22),
+                            // BUG FIX: chevron was using textSec (too light in dark), use explicit
+                            color: isDark
+                                ? AppTheme.darkTextSec
+                                : const Color(0xFF6B6B8A),
+                            size: 22),
                       ],
                     ),
                   ),
@@ -371,10 +414,13 @@ class _FocusScreenState extends State<FocusScreen>
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppTheme.errorColor.withValues(alpha: 0.06),
+                    // BUG FIX: Light mode warning container needs more visible tint
+                    color: AppTheme.errorColor
+                        .withValues(alpha: isDark ? 0.06 : 0.07),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                        color: AppTheme.errorColor.withValues(alpha: 0.25)),
+                        color: AppTheme.errorColor
+                            .withValues(alpha: isDark ? 0.25 : 0.35)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,8 +443,12 @@ class _FocusScreenState extends State<FocusScreen>
                       const SizedBox(height: 12),
                       Row(
                         children: [
+                          // BUG FIX: Phone icon was using textPrimary — use explicit icon color
                           Icon(Icons.phone_rounded,
-                              color: textPrimary, size: 18),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF1A1A2E),
+                              size: 18),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text('Allow emergency calls',
@@ -425,26 +475,30 @@ class _FocusScreenState extends State<FocusScreen>
 
               // ── Breathing exercise toggle ─────────────────────────────
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 12),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: focus.showBreathing
-                      ? AppTheme.gemColor.withValues(
-                      alpha: isDark ? 0.04 : 0.06)
+                      ? AppTheme.gemColor
+                      .withValues(alpha: isDark ? 0.07 : 0.08)
                       : cardBg,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: focus.showBreathing
-                        ? AppTheme.gemColor.withValues(alpha: 0.2)
+                        ? AppTheme.gemColor
+                        .withValues(alpha: isDark ? 0.25 : 0.35)
                         : cardBorder,
+                    width: focus.showBreathing ? 1.5 : 1,
                   ),
                   boxShadow: isDark
                       ? []
                       : [
                     BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2))
+                        color: focus.showBreathing
+                            ? AppTheme.gemColor.withValues(alpha: 0.10)
+                            : Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3))
                   ],
                 ),
                 child: Row(
@@ -453,7 +507,9 @@ class _FocusScreenState extends State<FocusScreen>
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: AppTheme.gemColor.withValues(alpha: 0.12),
+                        // BUG FIX: Icon container slightly more visible in light mode
+                        color: AppTheme.gemColor
+                            .withValues(alpha: isDark ? 0.12 : 0.14),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.self_improvement_rounded,
@@ -509,8 +565,8 @@ class _FocusScreenState extends State<FocusScreen>
                     boxShadow: [
                       BoxShadow(
                           color: focus.focusLevel.color
-                              .withValues(alpha: isDark ? 0.3 : 0.35),
-                          blurRadius: 16,
+                              .withValues(alpha: isDark ? 0.30 : 0.40),
+                          blurRadius: isDark ? 16 : 20,
                           offset: const Offset(0, 6))
                     ],
                   ),
@@ -556,12 +612,12 @@ class _FocusScreenState extends State<FocusScreen>
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? level.color.withValues(alpha: isDark ? 0.08 : 0.06)
+              ? level.color.withValues(alpha: isDark ? 0.10 : 0.08)
               : cardBg,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isSelected
-                ? level.color.withValues(alpha: 0.4)
+                ? level.color.withValues(alpha: isDark ? 0.40 : 0.55)
                 : cardBorder,
             width: isSelected ? 1.5 : 1,
           ),
@@ -570,9 +626,10 @@ class _FocusScreenState extends State<FocusScreen>
               : [
             BoxShadow(
                 color: isSelected
-                    ? level.color.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
+                // BUG FIX: More prominent selected shadow in light mode
+                    ? level.color.withValues(alpha: 0.18)
+                    : Colors.black.withValues(alpha: 0.06),
+                blurRadius: isSelected ? 14 : 10,
                 offset: const Offset(0, 3))
           ],
         ),
@@ -584,18 +641,25 @@ class _FocusScreenState extends State<FocusScreen>
               height: 48,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? level.color.withValues(alpha: 0.15)
+                    ? level.color.withValues(alpha: isDark ? 0.15 : 0.14)
                     : isDark
                     ? Colors.white.withValues(alpha: 0.04)
-                    : Colors.grey.shade100,
+                // BUG FIX: Light mode unselected icon bg was barely visible
+                    : const Color(0xFFEFEEF8),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                     color: isSelected
-                        ? level.color.withValues(alpha: 0.3)
+                        ? level.color.withValues(alpha: isDark ? 0.30 : 0.40)
                         : Colors.transparent),
               ),
               child: Icon(level.icon,
-                  color: isSelected ? level.color : textSec, size: 22),
+                  // BUG FIX: Unselected icon was using textSec (too grey in light mode)
+                  color: isSelected
+                      ? level.color
+                      : isDark
+                      ? AppTheme.darkTextSec
+                      : const Color(0xFF5A5A7A),
+                  size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -616,8 +680,9 @@ class _FocusScreenState extends State<FocusScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color:
-                            AppTheme.gemColor.withValues(alpha: 0.15),
+                            // BUG FIX: Badge bg slightly more opaque in light mode
+                            color: AppTheme.gemColor
+                                .withValues(alpha: isDark ? 0.15 : 0.18),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text('Recommended',
@@ -650,7 +715,8 @@ class _FocusScreenState extends State<FocusScreen>
                       ? level.color
                       : isDark
                       ? Colors.white.withValues(alpha: 0.15)
-                      : Colors.grey.shade300,
+                  // BUG FIX: Radio border in light mode was barely visible
+                      : const Color(0xFFBBB9D8),
                   width: isSelected ? 0 : 2,
                 ),
               ),
@@ -683,7 +749,8 @@ class _FocusScreenState extends State<FocusScreen>
               ? activeColor
               : isDark
               ? Colors.white.withValues(alpha: 0.08)
-              : Colors.grey.shade300,
+          // BUG FIX: Light mode OFF toggle was nearly invisible (grey.shade300)
+              : const Color(0xFFCCCAE0), // more visible purple-grey
           borderRadius: BorderRadius.circular(13),
         ),
         child: AnimatedAlign(
@@ -741,8 +808,8 @@ class _FocusScreenState extends State<FocusScreen>
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: const Color(0xFF1E1E2E),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20)),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(
             children: [
               const Icon(Icons.warning_rounded,
@@ -755,15 +822,14 @@ class _FocusScreenState extends State<FocusScreen>
           ),
           content: Text(
             'You will NOT be able to stop this $_selectedMinutes-minute session until it ends.\n\nAll apps will be blocked. ${focus.allowEmergencyCalls ? "Only phone calls will work." : "No exceptions."}\n\nAre you sure?',
-            style: GoogleFonts.inter(
-                color: AppTheme.darkTextSec, height: 1.5),
+            style:
+            GoogleFonts.inter(color: AppTheme.darkTextSec, height: 1.5),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text('Cancel',
-                  style:
-                  GoogleFonts.inter(color: AppTheme.darkTextSec)),
+                  style: GoogleFonts.inter(color: AppTheme.darkTextSec)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
@@ -806,8 +872,8 @@ class _FocusScreenState extends State<FocusScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E2E),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Permissions Required',
             style: GoogleFonts.inter(
                 fontWeight: FontWeight.w800, color: Colors.white)),
@@ -819,8 +885,7 @@ class _FocusScreenState extends State<FocusScreen>
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Cancel',
-                style:
-                GoogleFonts.inter(color: AppTheme.darkTextSec)),
+                style: GoogleFonts.inter(color: AppTheme.darkTextSec)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -839,8 +904,7 @@ class _FocusScreenState extends State<FocusScreen>
             ),
             child: Text('Grant',
                 style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black)),
+                    fontWeight: FontWeight.w700, color: Colors.black)),
           ),
         ],
       ),
@@ -850,9 +914,9 @@ class _FocusScreenState extends State<FocusScreen>
   Future<void> _showCustomDurationDialog() async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF1E1E2E) : Colors.white;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : const Color(0xFF0F0F1A);
     final textSecColor =
-    isDark ? AppTheme.darkTextSec : Colors.grey.shade600;
+    isDark ? AppTheme.darkTextSec : const Color(0xFF4A4A6A);
 
     final controller =
     TextEditingController(text: _selectedMinutes.toString());
@@ -860,8 +924,8 @@ class _FocusScreenState extends State<FocusScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: bgColor,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Custom Duration',
             style: GoogleFonts.inter(
                 fontWeight: FontWeight.w800, color: textColor)),
@@ -872,6 +936,16 @@ class _FocusScreenState extends State<FocusScreen>
           decoration: InputDecoration(
             labelText: 'Minutes (1–1440)',
             labelStyle: GoogleFonts.inter(color: textSecColor),
+            // BUG FIX: Added explicit input border color for light mode
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : const Color(0xFFCCCAE0)),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: AppTheme.primaryColor),
+            ),
           ),
         ),
         actions: [
@@ -916,8 +990,7 @@ class _FocusScreenState extends State<FocusScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Focus session is running.',
-                  style:
-                  GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
@@ -938,8 +1011,8 @@ class _FocusScreenState extends State<FocusScreen>
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 12),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   child: Row(
                     children: [
                       Text('Deep Focus',
@@ -951,8 +1024,7 @@ class _FocusScreenState extends State<FocusScreen>
                       if (focus.isPaused)
                         _statusBadge('PAUSED', AppTheme.warningColor)
                       else
-                        _statusBadge(
-                            level.label.toUpperCase(), level.color),
+                        _statusBadge(level.label.toUpperCase(), level.color),
                     ],
                   ),
                 ),
@@ -981,10 +1053,7 @@ class _FocusScreenState extends State<FocusScreen>
                         gradient: const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFF1E1E2E),
-                            Color(0xFF12121A)
-                          ],
+                          colors: [Color(0xFF1E1E2E), Color(0xFF12121A)],
                         ),
                         border: Border.all(
                             color: Colors.white.withValues(alpha: 0.04)),
@@ -1044,16 +1113,14 @@ class _FocusScreenState extends State<FocusScreen>
 
                 Container(
                   width: double.infinity,
-                  padding:
-                  const EdgeInsets.fromLTRB(32, 32, 32, 100),
+                  padding: const EdgeInsets.fromLTRB(32, 32, 32, 100),
                   decoration: BoxDecoration(
                     color: const Color(0xFF16161F),
                     borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(32)),
                     border: Border(
                         top: BorderSide(
-                            color:
-                            Colors.white.withValues(alpha: 0.04))),
+                            color: Colors.white.withValues(alpha: 0.04))),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1076,8 +1143,7 @@ class _FocusScreenState extends State<FocusScreen>
                           label: 'End',
                           color: AppTheme.errorColor,
                           isActive: false,
-                          onTap: () =>
-                              _showStopDialog(context, focus),
+                          onTap: () => _showStopDialog(context, focus),
                         ),
                       _controlButton(
                         icon: level.icon,
@@ -1238,15 +1304,15 @@ class _FocusScreenState extends State<FocusScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E2E),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('End Session?',
             style: GoogleFonts.inter(
                 fontWeight: FontWeight.w800, color: Colors.white)),
         content: Text(
           "Ending early will cost you HP and you won't receive Gold or XP rewards.",
-          style: GoogleFonts.inter(
-              color: AppTheme.darkTextSec, height: 1.4),
+          style:
+          GoogleFonts.inter(color: AppTheme.darkTextSec, height: 1.4),
         ),
         actions: [
           TextButton(

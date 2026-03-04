@@ -13,7 +13,8 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
     <!-- Query all apps (Android 11+) -->
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
 
     <!-- Foreground service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
@@ -79,7 +80,7 @@
         <service
             android:name=".AppBlockAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="true">
+            android:exported="false">
 
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService"/>
@@ -90,10 +91,12 @@
                 android:resource="@xml/accessibility_config"/>
         </service>
 
-        <!-- Block Screen Activity -->
+        <!-- Block Screen Activity (not exported, no taskAffinity to prevent stacking) -->
         <activity
             android:name=".BlockActivity"
-            android:exported="true"
+            android:exported="false"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"/>
 
         <!-- Flutter Embedding -->

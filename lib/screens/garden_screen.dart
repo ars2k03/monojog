@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:monojog/start_page/login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:monojog/providers/game_provider.dart';
@@ -11,14 +12,12 @@ import 'package:monojog/services/merch_service.dart';
 
 // ── Garden adaptive color palette ──
 class _GC {
-  // Accent colors (same both modes)
   static const green = Color(0xFF00BFA5);
   static const greenDark = Color(0xFF00897B);
   static const lime = Color(0xFF00BFA5);
   static const gold = Color(0xFFFFB300);
   static const red = Color(0xFFEF5350);
 
-  // Adaptive
   static Color bg(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
           ? AppTheme.darkBg
@@ -308,8 +307,7 @@ class _StatisticsTab extends StatelessWidget {
               const SizedBox(height: 14),
               Container(
                 height: 220,
-                padding:
-                const EdgeInsets.fromLTRB(12, 20, 12, 12),
+                padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
                 decoration: BoxDecoration(
                   color: _GC.card(context),
                   borderRadius: BorderRadius.circular(20),
@@ -333,8 +331,8 @@ class _StatisticsTab extends StatelessWidget {
                     barTouchData: BarTouchData(
                       enabled: true,
                       touchTooltipData: BarTouchTooltipData(
-                        getTooltipItem: (group, groupIndex, rod,
-                            rodIndex) {
+                        getTooltipItem:
+                            (group, groupIndex, rod, rodIndex) {
                           return BarTooltipItem(
                             '${rod.toY.toInt()} min',
                             const TextStyle(
@@ -391,8 +389,7 @@ class _StatisticsTab extends StatelessWidget {
                       drawVerticalLine: false,
                       horizontalInterval: 30,
                       getDrawingHorizontalLine: (value) => FlLine(
-                          color: _GC.border(context),
-                          strokeWidth: 1),
+                          color: _GC.border(context), strokeWidth: 1),
                     ),
                     borderData: FlBorderData(show: false),
                     barGroups: _buildWeeklyBars(
@@ -424,8 +421,7 @@ class _StatisticsTab extends StatelessWidget {
       int totalMinutes, BuildContext context) {
     final rng = Random(totalMinutes);
     final weekData = List.generate(7, (i) {
-      final base =
-      (totalMinutes / 7).clamp(0, 120).toInt();
+      final base = (totalMinutes / 7).clamp(0, 120).toInt();
       final variance = rng.nextInt(40) - 15;
       return max(0, base + variance).toDouble();
     });
@@ -487,10 +483,9 @@ class _StatisticsTab extends StatelessWidget {
                   child: CircularProgressIndicator(
                     value: score / 100,
                     strokeWidth: 10,
-                    backgroundColor:
-                    _GC.green.withValues(alpha: 0.12),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                        _GC.green),
+                    backgroundColor: _GC.green.withValues(alpha: 0.12),
+                    valueColor:
+                    const AlwaysStoppedAnimation<Color>(_GC.green),
                     strokeCap: StrokeCap.round,
                   ),
                 ),
@@ -596,8 +591,7 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: _GC.card(context),
         borderRadius: BorderRadius.circular(18),
-        border:
-        Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.07),
@@ -684,11 +678,10 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    _sparkleAnim =
-        Tween<double>(begin: 0.85, end: 1.0).animate(
-          CurvedAnimation(
-              parent: _sparkleController, curve: Curves.easeInOut),
-        );
+    _sparkleAnim = Tween<double>(begin: 0.85, end: 1.0).animate(
+      CurvedAnimation(
+          parent: _sparkleController, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -718,8 +711,7 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
         nextStageIndex >= 0 ? _stages[nextStageIndex] : null;
         final progress = nextStage != null
             ? (totalMin - stage.requiredMinutes) /
-            max(1,
-                nextStage.requiredMinutes - stage.requiredMinutes)
+            max(1, nextStage.requiredMinutes - stage.requiredMinutes)
             : 1.0;
         final fullTrees = totalMin ~/ 600;
         final gardenPlants = _buildGardenPlants(totalMin);
@@ -729,8 +721,7 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _buildCurrentPlant(
-                  stage, progress, nextStage, totalMin),
+              _buildCurrentPlant(stage, progress, nextStage, totalMin),
               const SizedBox(height: 24),
               if (fullTrees > 0) _buildRewardBanner(fullTrees),
               if (fullTrees > 0) const SizedBox(height: 20),
@@ -780,8 +771,8 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
             animation: _sparkleAnim,
             builder: (_, __) => Transform.scale(
               scale: _sparkleAnim.value,
-              child: Text(stage.emoji,
-                  style: const TextStyle(fontSize: 80)),
+              child:
+              Text(stage.emoji, style: const TextStyle(fontSize: 80)),
             ),
           ),
           const SizedBox(height: 8),
@@ -829,25 +820,24 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
               borderRadius: BorderRadius.circular(8),
               child: TweenAnimationBuilder<double>(
                 duration: const Duration(milliseconds: 800),
-                tween: Tween(
-                    begin: 0, end: progress.clamp(0.0, 1.0)),
+                tween: Tween(begin: 0, end: progress.clamp(0.0, 1.0)),
                 curve: Curves.easeOutCubic,
                 builder: (_, val, __) => LinearProgressIndicator(
                   value: val,
                   minHeight: 10,
                   backgroundColor: _GC.green.withValues(alpha: 0.1),
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                      _GC.green),
+                  valueColor:
+                  const AlwaysStoppedAnimation<Color>(_GC.green),
                 ),
               ),
             ),
           ] else ...[
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 8),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                    colors: [_GC.green, _GC.lime]),
+                gradient:
+                const LinearGradient(colors: [_GC.green, _GC.lime]),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Text(
@@ -991,8 +981,7 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
                 ),
                 child: Center(
                   child: p.isNotEmpty
-                      ? Text(p,
-                      style: const TextStyle(fontSize: 36))
+                      ? Text(p, style: const TextStyle(fontSize: 36))
                       : Icon(Icons.add_rounded,
                       color: _GC.textSec(context)
                           .withValues(alpha: 0.4),
@@ -1025,8 +1014,8 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
           return AnimatedContainer(
             duration: const Duration(milliseconds: 400),
             margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 12),
+            padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: isCurrent
                   ? _GC.green.withValues(alpha: 0.08)
@@ -1045,8 +1034,7 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
             ),
             child: Row(
               children: [
-                Text(stage.emoji,
-                    style: const TextStyle(fontSize: 28)),
+                Text(stage.emoji, style: const TextStyle(fontSize: 28)),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -1067,8 +1055,7 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
                             ? 'Starting point'
                             : '${stage.requiredMinutes} minutes of focus',
                         style: TextStyle(
-                            fontSize: 11,
-                            color: _GC.textSec(context)),
+                            fontSize: 11, color: _GC.textSec(context)),
                       ),
                     ],
                   ),
@@ -1122,8 +1109,7 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate:
-          const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             childAspectRatio: 0.9,
             crossAxisSpacing: 10,
@@ -1137,8 +1123,7 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
                 color: _GC.card(context),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                    color: _GC.gold.withValues(alpha: 0.3),
-                    width: 1),
+                    color: _GC.gold.withValues(alpha: 0.3), width: 1),
                 boxShadow: [
                   BoxShadow(
                     color: _GC.gold.withValues(alpha: 0.07),
@@ -1150,8 +1135,7 @@ class _FlowerGardenTabState extends State<_FlowerGardenTab>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(r.icon,
-                      style: const TextStyle(fontSize: 30)),
+                  Text(r.icon, style: const TextStyle(fontSize: 30)),
                   const SizedBox(height: 6),
                   Text(
                     r.name,
@@ -1206,6 +1190,78 @@ class _MerchTabState extends State<_MerchTab> {
 
   @override
   Widget build(BuildContext context) {
+    // ── Login check ──
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: _GC.surface(context),
+                  shape: BoxShape.circle,
+                ),
+                child: const Text('🛍️', style: TextStyle(fontSize: 52)),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Login Required',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: _GC.textPrimary(context),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Please login to browse and order t-shirts.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _GC.textSec(context),
+                ),
+              ),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => LoginScreen()
+                        )
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _GC.green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Go to Login',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // ── Logged in — show t-shirts ──
     return FutureBuilder<void>(
       future: _seedFuture,
       builder: (context, seedSnap) {
@@ -1216,8 +1272,7 @@ class _MerchTabState extends State<_MerchTab> {
         return StreamBuilder<List<TShirt>>(
           stream: MerchService.instance.watchTShirts(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState ==
-                ConnectionState.waiting) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
 
@@ -1225,8 +1280,7 @@ class _MerchTabState extends State<_MerchTab> {
               return Center(
                 child: Text(
                   'Could not load t-shirts right now.',
-                  style: TextStyle(
-                      color: _GC.textSec(context)),
+                  style: TextStyle(color: _GC.textSec(context)),
                 ),
               );
             }
@@ -1324,13 +1378,11 @@ class _MerchTabState extends State<_MerchTab> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color:
-                              _GC.green.withValues(alpha: 0.1),
-                              borderRadius:
-                              BorderRadius.circular(8),
+                              color: _GC.green.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              '₹${tshirt.price.toInt()}',
+                              '৳${tshirt.price.toInt()}',
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
@@ -1367,6 +1419,9 @@ class _MerchTabState extends State<_MerchTab> {
   }
 }
 
+// ════════════════════════════════════════════════
+//  MERCH ORDER FORM
+// ════════════════════════════════════════════════
 class _MerchOrderForm extends StatefulWidget {
   final TShirt tshirt;
 
@@ -1474,8 +1529,7 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide:
-        BorderSide(color: _GC.border(context), width: 1),
+        borderSide: BorderSide(color: _GC.border(context), width: 1),
       ),
     );
   }
@@ -1504,8 +1558,7 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color:
-                    _GC.textSec(context).withValues(alpha: 0.3),
+                    color: _GC.textSec(context).withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1529,7 +1582,7 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
                           ),
                         ),
                         Text(
-                          '₹${widget.tshirt.price.toInt()}',
+                          '৳${widget.tshirt.price.toInt()}',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -1557,23 +1610,19 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
                     label: Text(size),
                     selected: isSelected,
                     onSelected: (selected) {
-                      if (selected)
-                        setState(() => _selectedSize = size);
+                      if (selected) setState(() => _selectedSize = size);
                     },
                     selectedColor: _GC.green.withValues(alpha: 0.15),
                     backgroundColor: _GC.surface(context),
                     labelStyle: TextStyle(
-                      color: isSelected
-                          ? _GC.green
-                          : _GC.textSec(context),
+                      color: isSelected ? _GC.green : _GC.textSec(context),
                       fontWeight: FontWeight.w800,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
-                        color: isSelected
-                            ? _GC.green
-                            : Colors.transparent,
+                        color:
+                        isSelected ? _GC.green : Colors.transparent,
                       ),
                     ),
                   );
@@ -1601,9 +1650,8 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
                     selectedColor: _GC.green.withValues(alpha: 0.15),
                     backgroundColor: _GC.surface(context),
                     labelStyle: TextStyle(
-                      color: isSelected
-                          ? _GC.green
-                          : _GC.textSec(context),
+                      color:
+                      isSelected ? _GC.green : _GC.textSec(context),
                       fontWeight: FontWeight.w800,
                     ),
                     shape: RoundedRectangleBorder(
@@ -1638,9 +1686,8 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
                     selectedColor: _GC.green.withValues(alpha: 0.15),
                     backgroundColor: _GC.surface(context),
                     labelStyle: TextStyle(
-                      color: isSelected
-                          ? _GC.green
-                          : _GC.textSec(context),
+                      color:
+                      isSelected ? _GC.green : _GC.textSec(context),
                       fontWeight: FontWeight.w800,
                     ),
                     shape: RoundedRectangleBorder(
@@ -1739,9 +1786,7 @@ class _MerchOrderFormState extends State<_MerchOrderForm> {
                     elevation: 0,
                   ),
                   child: Text(
-                    _isSubmitting
-                        ? 'Placing Order...'
-                        : 'Place Order',
+                    _isSubmitting ? 'Placing Order...' : 'Place Order',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,

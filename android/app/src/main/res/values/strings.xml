@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">মনোযোগ</string>
+    <string name="accessibility_service_description">মনোযোগ অ্যাপের ফোকাস মোড চলাকালীন ব্লক করা অ্যাপ শনাক্ত ও বন্ধ করতে এই সার্ভিস ব্যবহার করা হয়।</string>
+</resources>

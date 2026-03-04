@@ -5,7 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: '437910509347-qahcmrgsjaqd12hlpbvkb5a4262eq9be.apps.googleusercontent.com',
+  );
 
   User? _user;
   bool _isLoading = false;
@@ -55,15 +57,24 @@ class AuthProvider with ChangeNotifier {
       _setLoading(true);
       _clearErrorSilent();
 
+      // আগের sign in clear করো
+      await _googleSignIn.signOut();
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
         _setLoading(false);
-        return false;
+        return false; // user নিজে cancel করেছে
       }
 
       final GoogleSignInAuthentication googleAuth =
       await googleUser.authentication;
+
+      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+        _error = 'Google authentication tokens are missing. Please try again.';
+        _setLoading(false);
+        return false;
+      }
 
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -87,17 +98,19 @@ class AuthProvider with ChangeNotifier {
       _setLoading(false);
       return true;
     } on FirebaseAuthException catch (e) {
+      debugPrint('FirebaseAuthException: ${e.code} — ${e.message}');
       _error = _mapFirebaseError(e.code);
       _setLoading(false);
       return false;
     } catch (e) {
+      debugPrint('Google Sign-In Error: $e');
       if (e.toString().contains('canceled') ||
-          e.toString().contains('cancelled')) {
+          e.toString().contains('cancelled') ||
+          e.toString().contains('sign_in_canceled')) {
         _setLoading(false);
         return false;
       }
       _error = 'Google sign-in failed. Please try again.';
-      debugPrint('Google Sign-In Error: $e');
       _setLoading(false);
       return false;
     }

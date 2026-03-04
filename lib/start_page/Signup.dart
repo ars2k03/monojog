@@ -88,19 +88,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final success = await auth.signInWithGoogle();
 
     if (!mounted) return;
-
     setState(() => isGoogleLoading = false);
 
     if (success) {
-      // ✅ Google sign-in → straight to home
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => CheckEmailScreen(
-          email: _emailCtrl.text.trim(),
-          mode: CheckEmailMode.verification,
-        )),
+        MaterialPageRoute(builder: (_) => const MainScreen()),
       );
-
     } else if (auth.error != null) {
       _showErrorSnackbar(auth.error!);
     }

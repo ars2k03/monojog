@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:monojog/models/tshirt_model.dart';
 
 class MerchService {
@@ -16,19 +17,24 @@ class MerchService {
       _firestore.collection('merch_orders');
 
   Stream<List<TShirt>> watchTShirts() {
-    return _tshirtRef.where('isAvailable', isEqualTo: true).snapshots().map(
-        (snapshot) => snapshot.docs
-            .map((doc) => TShirt.fromMap({'id': doc.id, ...doc.data()}))
-            .toList()
-          ..sort((a, b) => a.name.compareTo(b.name)));
+    return _tshirtRef
+        .where('isAvailable', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+        .map((doc) => TShirt.fromMap({'id': doc.id, ...doc.data()}))
+        .toList()
+      ..sort((a, b) => a.name.compareTo(b.name)));
   }
 
   Stream<List<TShirtOrder>> watchOrdersForUser(String userId) {
-    return _orderRef.where('userId', isEqualTo: userId).snapshots().map(
-        (snapshot) => snapshot.docs
-            .map((doc) => TShirtOrder.fromMap({'id': doc.id, ...doc.data()}))
-            .toList()
-          ..sort((a, b) => b.orderedAt.compareTo(a.orderedAt)));
+    return _orderRef
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+        .map((doc) =>
+        TShirtOrder.fromMap({'id': doc.id, ...doc.data()}))
+        .toList()
+      ..sort((a, b) => b.orderedAt.compareTo(a.orderedAt)));
   }
 
   Future<void> placeOrder(TShirtOrder order) async {
@@ -40,14 +46,22 @@ class MerchService {
   }
 
   Future<void> seedDefaultTShirtsIfEmpty({List<TShirt>? tshirts}) async {
-    final existing = await _tshirtRef.limit(1).get();
-    if (existing.docs.isNotEmpty) return;
+    try {
+      final existing = await _tshirtRef.limit(1).get();
+      if (existing.docs.isNotEmpty) return;
 
-    final defaults = tshirts ?? TShirt.catalog.take(5).toList();
-    final batch = _firestore.batch();
-    for (final item in defaults) {
-      batch.set(_tshirtRef.doc(item.id), item.toMap());
+      final defaults = tshirts ?? TShirt.catalog.take(5).toList();
+
+      if (defaults.isEmpty) return;
+
+      final batch = _firestore.batch();
+      for (final item in defaults) {
+        batch.set(_tshirtRef.doc(item.id), item.toMap());
+      }
+      await batch.commit();
+    } catch (e) {
+      // Seed failed silently — log করো debug-এর জন্য
+      debugPrint('MerchService seedDefaultTShirtsIfEmpty error: $e');
     }
-    await batch.commit();
   }
 }

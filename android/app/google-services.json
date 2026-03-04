@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "437910509347",
+    "project_id": "resturant-app-b444c",
+    "storage_bucket": "resturant-app-b444c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:437910509347:android:d5a2444ab26d3818519e96",
+        "android_client_info": {
+          "package_name": "com.example.monojog"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "437910509347-qahcmrgsjaqd12hlpbvkb5a4262eq9be.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAf27x5_eLBsDuQVblldIBaUEtvo5COATE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "437910509347-qahcmrgsjaqd12hlpbvkb5a4262eq9be.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

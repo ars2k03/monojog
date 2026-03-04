@@ -3,17 +3,64 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monojog/providers/sleep_provider.dart';
 import 'package:monojog/theme/app_theme.dart';
-import 'package:monojog/widgets/neu_container.dart';
 
-// ── Reuse the same palette ──
+// ── Fixed accent colors (vivid enough for both modes) ──────────────────────
 class _SC {
-  static const mint = Color(0xFF66FFCC);
-  static const mintDark = Color(0xFF00CC99);
+  static const mint = Color(0xFF00BFA5);
+  static const mintDark = Color(0xFF009688);
   static const purple = Color(0xFF7C4DFF);
-  static const rem = Color(0xFFFF6B6B);
-  static const core = Color(0xFF4ECDC4);
+  static const rem = Color(0xFFE53935);
+  static const core = Color(0xFF26A69A);
   static const deep = Color(0xFF7C4DFF);
-  static const light = Color(0xFFFEE440);
+  static const light = Color(0xFFF9A825);
+
+  // ── Semantic tokens ──────────────────────────────────────────────────────
+  static Color bg(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? AppTheme.darkBg
+          : const Color(0xFFF0F4F8);
+
+  static Color card(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? AppTheme.darkSurface
+          : Colors.white;
+
+  static Color textPrimary(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? Colors.white
+          : const Color(0xFF0D1117);
+
+  static Color textSec(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? Colors.white.withValues(alpha: 0.45)
+          : const Color(0xFF5A6070);
+
+  static Color textMuted(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? Colors.white.withValues(alpha: 0.3)
+          : const Color(0xFF8A94A6);
+
+  static Color surfaceMuted(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? Colors.white.withValues(alpha: 0.06)
+          : Colors.black.withValues(alpha: 0.05);
+
+  static Color border(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark
+          ? Colors.white.withValues(alpha: 0.06)
+          : Colors.black.withValues(alpha: 0.07);
+
+  static bool isDark(BuildContext ctx) =>
+      Theme.of(ctx).brightness == Brightness.dark;
+
+  static List<BoxShadow> shadow(BuildContext ctx) => isDark(ctx)
+      ? []
+      : [
+    BoxShadow(
+        color: Colors.black.withValues(alpha: 0.06),
+        blurRadius: 10,
+        offset: const Offset(0, 3))
+  ];
 }
 
 class SleepInsightsScreen extends StatelessWidget {
@@ -24,15 +71,15 @@ class SleepInsightsScreen extends StatelessWidget {
     return Consumer<SleepProvider>(
       builder: (ctx, sleep, _) {
         return Scaffold(
-          backgroundColor: AppTheme.darkBg,
+          backgroundColor: _SC.bg(context),
           body: SafeArea(
             child: Column(
               children: [
                 _buildTopBar(context),
                 Expanded(
                   child: sleep.sleepHistory.isEmpty
-                      ? _buildEmptyState()
-                      : _buildContent(sleep),
+                      ? _buildEmptyState(context)
+                      : _buildContent(context, sleep),
                 ),
               ],
             ),
@@ -42,6 +89,7 @@ class SleepInsightsScreen extends StatelessWidget {
     );
   }
 
+  // ── Top Bar ──────────────────────────────────────────────────────────────
   Widget _buildTopBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -49,21 +97,26 @@ class SleepInsightsScreen extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: const NeuContainer(
+            child: Container(
               width: 44,
               height: 44,
-              shape: BoxShape.circle,
-              child:
-                  Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+              decoration: BoxDecoration(
+                color: _SC.card(context),
+                shape: BoxShape.circle,
+                border: Border.all(color: _SC.border(context)),
+                boxShadow: _SC.shadow(context),
+              ),
+              child: Icon(Icons.arrow_back_rounded,
+                  color: _SC.textPrimary(context), size: 20),
             ),
           ),
           const SizedBox(width: 14),
-          const Text(
+          Text(
             'Sleep Insights',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w900,
-              color: Colors.white,
+              color: _SC.textPrimary(context),
             ),
           ),
         ],
@@ -71,18 +124,19 @@ class SleepInsightsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  // ── Empty State ──────────────────────────────────────────────────────────
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.nights_stay_rounded,
-              color: _SC.mint.withValues(alpha: 0.3), size: 72),
+              color: _SC.mint.withValues(alpha: 0.35), size: 72),
           const SizedBox(height: 16),
           Text(
             'No sleep data yet',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.5),
+              color: _SC.textSec(context),
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
@@ -91,7 +145,7 @@ class SleepInsightsScreen extends StatelessWidget {
           Text(
             'Start tracking to see insights',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.3),
+              color: _SC.textMuted(context),
               fontSize: 14,
             ),
           ),
@@ -100,36 +154,37 @@ class SleepInsightsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(SleepProvider sleep) {
+  // ── Content ──────────────────────────────────────────────────────────────
+  Widget _buildContent(BuildContext context, SleepProvider sleep) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
           const SizedBox(height: 8),
-          _buildSleepScoreRing(sleep),
+          _buildSleepScoreRing(context, sleep),
           const SizedBox(height: 20),
-          _buildStageBreakdown(sleep),
+          _buildStageBreakdown(context, sleep),
           const SizedBox(height: 20),
-          _buildSuggestions(sleep),
+          _buildSuggestions(context, sleep),
           const SizedBox(height: 20),
-          _buildHistoryList(sleep),
+          _buildHistoryList(context, sleep),
           const SizedBox(height: 32),
         ],
       ),
     );
   }
 
-  // ── Sleep Score Ring ──
-  Widget _buildSleepScoreRing(SleepProvider sleep) {
-    return NeuContainer(
+  // ── Sleep Score Ring ─────────────────────────────────────────────────────
+  Widget _buildSleepScoreRing(BuildContext context, SleepProvider sleep) {
+    return _AdaptiveCard(
+      context: context,
       padding: const EdgeInsets.all(24),
-      borderRadius: BorderRadius.circular(28),
       child: Column(
         children: [
-          const Text(
+          Text(
             'Overall Sleep Quality',
             style: TextStyle(
-              color: Colors.white,
+              color: _SC.textPrimary(context),
               fontWeight: FontWeight.w800,
               fontSize: 16,
             ),
@@ -141,7 +196,7 @@ class SleepInsightsScreen extends StatelessWidget {
             child: CustomPaint(
               painter: _SleepScoreRingPainter(
                 score: sleep.averageQuality / 100.0,
-                avgHours: sleep.averageSleepHours,
+                trackColor: _SC.surfaceMuted(context),
               ),
               child: Center(
                 child: Column(
@@ -149,8 +204,8 @@ class SleepInsightsScreen extends StatelessWidget {
                   children: [
                     Text(
                       '${sleep.averageQuality}',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: _SC.textPrimary(context),
                         fontSize: 44,
                         fontWeight: FontWeight.w900,
                         height: 1,
@@ -159,7 +214,7 @@ class SleepInsightsScreen extends StatelessWidget {
                     Text(
                       'Quality Score',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.4),
+                        color: _SC.textMuted(context),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -174,13 +229,14 @@ class SleepInsightsScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _miniStat(
+                  context,
                   Icons.bedtime_rounded,
                   '${sleep.averageSleepHours.toStringAsFixed(1)}h',
                   'Avg Duration',
                   _SC.mint),
-              _miniStat(Icons.local_fire_department_rounded,
+              _miniStat(context, Icons.local_fire_department_rounded,
                   '${sleep.sleepStreak}', 'Streak', _SC.rem),
-              _miniStat(Icons.format_list_numbered_rounded,
+              _miniStat(context, Icons.format_list_numbered_rounded,
                   '${sleep.sleepHistory.length}', 'Total', _SC.purple),
             ],
           ),
@@ -189,34 +245,27 @@ class SleepInsightsScreen extends StatelessWidget {
     );
   }
 
-  Widget _miniStat(IconData icon, String value, String label, Color color) {
+  Widget _miniStat(BuildContext context, IconData icon, String value,
+      String label, Color color) {
     return Column(
       children: [
         Icon(icon, color: color, size: 20),
         const SizedBox(height: 6),
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.w900,
-            fontSize: 18,
-          ),
-        ),
+        Text(value,
+            style: TextStyle(
+                color: color, fontWeight: FontWeight.w900, fontSize: 18)),
         const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.4),
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        Text(label,
+            style: TextStyle(
+                color: _SC.textMuted(context),
+                fontSize: 11,
+                fontWeight: FontWeight.w500)),
       ],
     );
   }
 
-  // ── Stage Breakdown ──
-  Widget _buildStageBreakdown(SleepProvider sleep) {
+  // ── Stage Breakdown ──────────────────────────────────────────────────────
+  Widget _buildStageBreakdown(BuildContext context, SleepProvider sleep) {
     final sessions = sleep.sleepHistory;
     if (sessions.isEmpty) return const SizedBox.shrink();
 
@@ -234,22 +283,18 @@ class SleepInsightsScreen extends StatelessWidget {
     avgLight /= n;
     final total = avgDeep + avgCore + avgRem + avgLight;
 
-    return NeuContainer(
+    return _AdaptiveCard(
+      context: context,
       padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Average Sleep Stages',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              fontSize: 16,
-            ),
-          ),
+          Text('Average Sleep Stages',
+              style: TextStyle(
+                  color: _SC.textPrimary(context),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16)),
           const SizedBox(height: 20),
-          // Donut chart
           SizedBox(
             width: double.infinity,
             height: 160,
@@ -259,28 +304,29 @@ class SleepInsightsScreen extends StatelessWidget {
                 core: avgCore,
                 rem: avgRem,
                 light: avgLight,
+                trackColor: _SC.surfaceMuted(context),
               ),
             ),
           ),
           const SizedBox(height: 20),
-          _stageRow(
-              'Deep Sleep', avgDeep, total, _SC.deep, Icons.waves_rounded),
+          _stageRow(context, 'Deep Sleep', avgDeep, total, _SC.deep,
+              Icons.waves_rounded),
           const SizedBox(height: 12),
-          _stageRow(
-              'Core Sleep', avgCore, total, _SC.core, Icons.favorite_rounded),
+          _stageRow(context, 'Core Sleep', avgCore, total, _SC.core,
+              Icons.favorite_rounded),
           const SizedBox(height: 12),
-          _stageRow('REM Sleep', avgRem, total, _SC.rem,
+          _stageRow(context, 'REM Sleep', avgRem, total, _SC.rem,
               Icons.remove_red_eye_rounded),
           const SizedBox(height: 12),
-          _stageRow('Light Sleep', avgLight, total, _SC.light,
+          _stageRow(context, 'Light Sleep', avgLight, total, _SC.light,
               Icons.wb_twilight_rounded),
         ],
       ),
     );
   }
 
-  Widget _stageRow(
-      String label, double hours, double total, Color color, IconData icon) {
+  Widget _stageRow(BuildContext context, String label, double hours,
+      double total, Color color, IconData icon) {
     final pct = total > 0 ? (hours / total * 100) : 0.0;
     return Row(
       children: [
@@ -298,21 +344,18 @@ class SleepInsightsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                ),
-              ),
+              Text(label,
+                  style: TextStyle(
+                      color: _SC.textPrimary(context),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14)),
               const SizedBox(height: 4),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: (pct / 100).clamp(0.0, 1.0),
                   minHeight: 4,
-                  backgroundColor: Colors.white.withValues(alpha: 0.06),
+                  backgroundColor: _SC.surfaceMuted(context),
                   valueColor: AlwaysStoppedAnimation<Color>(color),
                 ),
               ),
@@ -323,35 +366,28 @@ class SleepInsightsScreen extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              '${hours.toStringAsFixed(1)}h',
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w800,
-                fontSize: 14,
-              ),
-            ),
-            Text(
-              '${pct.toStringAsFixed(0)}%',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.4),
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            Text('${hours.toStringAsFixed(1)}h',
+                style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14)),
+            Text('${pct.toStringAsFixed(0)}%',
+                style: TextStyle(
+                    color: _SC.textMuted(context),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500)),
           ],
         ),
       ],
     );
   }
 
-  // ── Suggestions ──
-  Widget _buildSuggestions(SleepProvider sleep) {
+  // ── Suggestions ──────────────────────────────────────────────────────────
+  Widget _buildSuggestions(BuildContext context, SleepProvider sleep) {
     final suggestions = _generateSuggestions(sleep);
-
-    return NeuContainer(
+    return _AdaptiveCard(
+      context: context,
       padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -360,58 +396,45 @@ class SleepInsightsScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      _SC.mint.withValues(alpha: 0.2),
-                      _SC.mint.withValues(alpha: 0.05),
-                    ],
-                  ),
+                  color: _SC.mint.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.auto_awesome_rounded,
                     color: _SC.mint, size: 20),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'AI Suggestions',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                ),
-              ),
+              Text('AI Suggestions',
+                  style: TextStyle(
+                      color: _SC.textPrimary(context),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16)),
             ],
           ),
           const SizedBox(height: 16),
           ...suggestions.map((s) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: _SC.mint,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        s,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 6),
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                      color: _SC.mint, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(s,
+                      style: TextStyle(
+                          color: _SC.textSec(context),
                           fontSize: 14,
                           height: 1.4,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
+                          fontWeight: FontWeight.w500)),
                 ),
-              )),
+              ],
+            ),
+          )),
         ],
       ),
     );
@@ -460,99 +483,87 @@ class SleepInsightsScreen extends StatelessWidget {
     return suggestions;
   }
 
-  // ── History List ──
-  Widget _buildHistoryList(SleepProvider sleep) {
+  // ── History List ─────────────────────────────────────────────────────────
+  Widget _buildHistoryList(BuildContext context, SleepProvider sleep) {
     final sessions = sleep.sleepHistory.reversed.take(10).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 4, bottom: 12),
-          child: Text(
-            'Recent Sessions',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              fontSize: 16,
-            ),
-          ),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Text('Recent Sessions',
+              style: TextStyle(
+                  color: _SC.textPrimary(context),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16)),
         ),
         ...sessions.map((s) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: NeuContainer(
-                padding: const EdgeInsets.all(16),
-                borderRadius: BorderRadius.circular(18),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: _getQualityColor(s.qualityScore)
-                            .withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(14),
+          padding: const EdgeInsets.only(bottom: 10),
+          child: _AdaptiveCard(
+            context: context,
+            padding: const EdgeInsets.all(16),
+            borderRadius: BorderRadius.circular(18),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: _getQualityColor(s.qualityScore)
+                        .withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${s.qualityScore}',
+                      style: TextStyle(
+                        color: _getQualityColor(s.qualityScore),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
                       ),
-                      child: Center(
-                        child: Text(
-                          '${s.qualityScore}',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(s.date,
                           style: TextStyle(
-                            color: _getQualityColor(s.qualityScore),
-                            fontWeight: FontWeight.w900,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            s.date,
-                            style: const TextStyle(
-                              color: Colors.white,
+                              color: _SC.textPrimary(context),
                               fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${s.formattedBedtime} → ${s.formattedWakeTime}',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.4),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                              fontSize: 14)),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${s.formattedBedtime} → ${s.formattedWakeTime}',
+                        style: TextStyle(
+                            color: _SC.textMuted(context),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500),
                       ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          s.formattedTotal,
-                          style: const TextStyle(
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(s.formattedTotal,
+                        style: const TextStyle(
                             color: _SC.mint,
                             fontWeight: FontWeight.w900,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Text(
-                          s.qualityLabel,
-                          style: TextStyle(
+                            fontSize: 16)),
+                    Text(s.qualityLabel,
+                        style: TextStyle(
                             color: _getQualityColor(s.qualityScore),
                             fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+                            fontWeight: FontWeight.w600)),
                   ],
                 ),
-              ),
-            )),
+              ],
+            ),
+          ),
+        )),
       ],
     );
   }
@@ -565,15 +576,53 @@ class SleepInsightsScreen extends StatelessWidget {
   }
 }
 
+// ── Adaptive Card helper widget ──────────────────────────────────────────────
+class _AdaptiveCard extends StatelessWidget {
+  final BuildContext context;
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final BorderRadius? borderRadius;
+
+  const _AdaptiveCard({
+    required this.context,
+    required this.child,
+    this.padding = const EdgeInsets.all(20),
+    this.borderRadius,
+  });
+
+  @override
+  Widget build(BuildContext _) {
+    final br = borderRadius ?? BorderRadius.circular(24);
+    final isDark = _SC.isDark(context);
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: _SC.card(context),
+        borderRadius: br,
+        border: Border.all(color: _SC.border(context)),
+        boxShadow: isDark
+            ? null
+            : [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3))
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
 // ═══════════════════════════════════════════
 //  Custom Painters
 // ═══════════════════════════════════════════
 
 class _SleepScoreRingPainter extends CustomPainter {
   final double score;
-  final double avgHours;
+  final Color trackColor;
 
-  _SleepScoreRingPainter({required this.score, required this.avgHours});
+  _SleepScoreRingPainter({required this.score, required this.trackColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -586,7 +635,7 @@ class _SleepScoreRingPainter extends CustomPainter {
       center,
       radius,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.06)
+        ..color = trackColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth,
     );
@@ -595,10 +644,7 @@ class _SleepScoreRingPainter extends CustomPainter {
     final gradient = SweepGradient(
       startAngle: -math.pi / 2,
       endAngle: -math.pi / 2 + 2 * math.pi * score,
-      colors: const [
-        _SC.mintDark,
-        _SC.mint,
-      ],
+      colors: const [_SC.mintDark, _SC.mint],
       transform: const GradientRotation(-math.pi / 2),
     );
 
@@ -615,7 +661,7 @@ class _SleepScoreRingPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     );
 
-    // Glow effect at tip
+    // Glow tip
     if (score > 0.01) {
       final tipAngle = -math.pi / 2 + 2 * math.pi * score;
       final tipCenter = Offset(
@@ -626,29 +672,28 @@ class _SleepScoreRingPainter extends CustomPainter {
         tipCenter,
         6,
         Paint()
-          ..color = _SC.mint.withValues(alpha: 0.6)
+          ..color = _SC.mint.withValues(alpha: 0.5)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
       );
-      canvas.drawCircle(
-        tipCenter,
-        4,
-        Paint()..color = _SC.mint,
-      );
+      canvas.drawCircle(tipCenter, 4, Paint()..color = _SC.mint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _SleepScoreRingPainter old) =>
+      old.score != score || old.trackColor != trackColor;
 }
 
 class _StageDonutPainter extends CustomPainter {
   final double deep, core, rem, light;
+  final Color trackColor;
 
   _StageDonutPainter({
     required this.deep,
     required this.core,
     required this.rem,
     required this.light,
+    required this.trackColor,
   });
 
   @override
@@ -656,10 +701,21 @@ class _StageDonutPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2 - 12;
     const strokeWidth = 20.0;
-    const gap = 0.03; // Gap between segments
+    const gap = 0.03;
 
     final total = deep + core + rem + light;
-    if (total <= 0) return;
+    if (total <= 0) {
+      // Draw empty ring in light mode so it's still visible
+      canvas.drawCircle(
+        center,
+        radius,
+        Paint()
+          ..color = trackColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth,
+      );
+      return;
+    }
 
     final segments = [
       _DonutSegment(deep / total, _SC.deep),
@@ -691,7 +747,12 @@ class _StageDonutPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _StageDonutPainter old) =>
+      old.deep != deep ||
+          old.core != core ||
+          old.rem != rem ||
+          old.light != light ||
+          old.trackColor != trackColor;
 }
 
 class _DonutSegment {
